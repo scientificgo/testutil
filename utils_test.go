@@ -108,7 +108,7 @@ func TestHorner(t *testing.T) {
 			c = cc[1 : n+1]
 		}
 		t.Run(fmt.Sprintf("n=%v", n), func(t *testing.T) {
-			res := Horner(x, n, c...)
+			res := Horner(x, c...)
 			if !EqualFloat64(res, out, tol) {
 				t.Errorf("Horner(%v, %v) = %v, want %v", x, c, res, out)
 			}
