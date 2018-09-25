@@ -20,7 +20,7 @@ package utils_test
 
 import (
 	"fmt"
-	. "github.com/scientificgo/scigo/utils"
+	. "github.com/scientificgo/utils"
 	"math"
 	"testing"
 )
