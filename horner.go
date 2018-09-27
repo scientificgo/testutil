@@ -7,15 +7,16 @@ package utils
 // Horner returns the polynomial defined by the coefficients c, evaluated at x,
 // using Horner's method, i.e.
 //
-//		      n-1
-//	Horner(x, c) = ∑ c[k] x**k = c[0] + c[1]*x + c[2]*x**2 + ... + c[n-1]*x**(n-1)
-//		      k=0
+//                n-1
+//  Horner(x, c) = ∑ c[k] x**k = c[0] + c[1]*x + c[2]*x**2 + ... + c[n-1]*x**(n-1)
+//                k=0
 //
 func Horner(x float64, c ...float64) float64 {
 	if c == nil {
 		return 0
 	}
-	n := len(c)
+
+	n = len(c)
 	res := c[n-1]
 	for k := n - 2; k >= 0; k-- {
 		res = res*x + c[k]
