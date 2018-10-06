@@ -6,46 +6,6 @@ package utils
 
 import "math"
 
-// ReduceFloat64 removes values common to both a and b and returns the reduced slices and their lengths.
-func ReduceFloat64s(a, b []float64) ([]float64, []float64, int, int) {
-	na := len(a)
-	nb := len(b)
-	for i := 0; i < na; i++ {
-		for j := 0; j < nb; j++ {
-			if a[i] == b[j] {
-				a = append(a[:i], a[i+1:]...)
-				b = append(b[:j], b[j+1:]...)
-				i--
-				j--
-				na--
-				nb--
-				break
-			}
-		}
-	}
-	return a, b, na, nb
-}
-
-// ReduceComplex128 removes values common to both a and b and returns the reduced slices and their lengths.
-func ReduceComplex128s(a, b []complex128) ([]complex128, []complex128, int, int) {
-	na := len(a)
-	nb := len(b)
-	for i := 0; i < na; i++ {
-		for j := 0; j < nb; j++ {
-			if a[i] == b[j] {
-				a = append(a[:i], a[i+1:]...)
-				b = append(b[:j], b[j+1:]...)
-				i--
-				j--
-				na--
-				nb--
-				break
-			}
-		}
-	}
-	return a, b, na, nb
-}
-
 // Any returns true if testf evaluates to true for any element of slice x.
 func AnyFloat64s(x []float64, testf func(float64) bool) bool {
 	for _, val := range x {
@@ -82,13 +42,15 @@ func AllComplex128s(x []complex128, testf func(complex128) bool) bool {
 
 // EqualFloat64 returns true if x and y are equal within the specified tolerance.
 func EqualFloat64(x, y, tol float64) bool {
-	if x == y {
+	if x == y || equalNaN(x, y) {
 		return true
 	}
-	if sd(x, y) >= tol {
-		return true
+	if x != 0 && y != 0 {
+		if sd(1-x/y) >= tol {
+			return true
+		}
 	}
-	if equalNaN(x, y) {
+	if sd(x-y) >= tol {
 		return true
 	}
 	return false
@@ -125,18 +87,12 @@ func EqualComplex128s(x, y []complex128, tol float64) bool {
 	return true
 }
 
-// sd returns the number of significant digits to which x and y are equal.
-func sd(x, y float64) float64 {
-	switch {
-	case y == 0 || x == 0:
-		v := x
-		if x == 0 {
-			v = y
-		}
-		return -math.Log10(math.Abs(v))
-	default:
-		return -math.Log10(math.Abs(1 - x/y))
+// sd returns the position of the first significant digits of |x|; e.g. sd(1e-17) = 17.0
+func sd(x float64) float64 {
+	if x < 0 {
+		x = -x
 	}
+	return -math.Log10(x)
 }
 
 // equalNaN returns false if only x or y is NaN.

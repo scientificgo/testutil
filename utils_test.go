@@ -5,7 +5,6 @@
 package utils_test
 
 import (
-	"fmt"
 	. "github.com/scientificgo/utils"
 	"math"
 	"testing"
@@ -75,92 +74,6 @@ func TestEqualComplex128s(t *testing.T) {
 		if res != c.out {
 			t.Errorf("EqualComplex128s(%v, %v, %v) = %v, want %v", c.x, c.y, c.tol, res, c.out)
 		}
-	}
-}
-
-func TestHorner(t *testing.T) {
-	cases := [][]float64{
-		// Each case is: {x, c[0], c[1], ..., out}
-		{1, 0},
-		{1, 2, 2, 2, 6},
-		{2.2011, 1, 2, 3, 4, 5, 6, 489.946813561314360763060},
-	}
-	for _, cc := range cases {
-		n := len(cc) - 2
-		x := cc[0]
-		out := cc[n+1]
-		var c []float64
-		if n != 0 {
-			c = cc[1 : n+1]
-		}
-		t.Run(fmt.Sprintf("n=%v", n), func(t *testing.T) {
-			res := Horner(x, c...)
-			if !EqualFloat64(res, out, tol) {
-				t.Errorf("Horner(%v, %v) = %v, want %v", x, c, res, out)
-			}
-		})
-	}
-}
-
-func TestReduceFloat64s(t *testing.T) {
-	cases := []struct {
-		name string
-		in   [][]float64
-		out  [][]float64
-		len  []int
-	}{
-		{"NaNs", [][]float64{[]float64{NaN, 2, 1, NaN, 5, NaN, 3}, []float64{NaN, NaN, 2, 11, NaN, NaN}},
-			[][]float64{[]float64{NaN, 1, NaN, 5, NaN, 3}, []float64{NaN, NaN, 11, NaN, NaN}}, []int{6, 5}},
-		{"Infs", [][]float64{[]float64{1, 2, 3, 4, Inf, -Inf}, []float64{-Inf, 11, 22, 33, Inf}},
-			[][]float64{[]float64{1, 2, 3, 4}, []float64{11, 22, 33}}, []int{4, 3}},
-		{"None", [][]float64{[]float64{1, 2, 3}, []float64{4, 5, 6}},
-			[][]float64{[]float64{1, 2, 3}, []float64{4, 5, 6}}, []int{3, 3}},
-		{"All", [][]float64{[]float64{math.Pi, math.E, math.Ln2}, []float64{math.Pi, math.E, math.Ln2}},
-			[][]float64{[]float64{}, []float64{}}, []int{0, 0}},
-	}
-	for _, c := range cases {
-		t.Run(c.name, func(t *testing.T) {
-			a, b := c.in[0], c.in[1]
-			aout, bout := c.out[0], c.out[1]
-			p, q := c.len[0], c.len[1]
-			aa, bb, p, q := ReduceFloat64s(a, b)
-			if !EqualFloat64s(aa, aout, tol) ||
-				!EqualFloat64s(bb, bout, tol) ||
-				p != len(aa) || q != len(bb) {
-				t.Errorf("ReduceFloat64s(%v, %v) = %v %v %v %v, want %v %v %v %v", a, b, aa, bb, len(aa), len(bb), aout, bout, p, q)
-			}
-		})
-	}
-}
-
-func TestReduceComplex128s(t *testing.T) {
-	cases := []struct {
-		name string
-		in   [][]complex128
-		out  [][]complex128
-		len  []int
-	}{
-		{"NaNs", [][]complex128{[]complex128{cNaN, 2, 1, cNaN, 5, cNaN, 3}, []complex128{cNaN, cNaN, 2, 11, cNaN, cNaN}},
-			[][]complex128{[]complex128{cNaN, 1, cNaN, 5, cNaN, 3}, []complex128{cNaN, cNaN, 11, cNaN, cNaN}}, []int{6, 5}},
-		{"Infs", [][]complex128{[]complex128{1, 2, 3, 4, cInf, -cInf}, []complex128{-cInf, 11, 22, 33, cInf}},
-			[][]complex128{[]complex128{1, 2, 3, 4}, []complex128{11, 22, 33}}, []int{4, 3}},
-		{"None", [][]complex128{[]complex128{1, 2, 3}, []complex128{4, 5, 6}},
-			[][]complex128{[]complex128{1, 2, 3}, []complex128{4, 5, 6}}, []int{3, 3}},
-		{"All", [][]complex128{[]complex128{math.Pi, math.E, math.Ln2}, []complex128{math.Pi, math.E, math.Ln2}},
-			[][]complex128{[]complex128{}, []complex128{}}, []int{0, 0}},
-	}
-	for _, c := range cases {
-		t.Run(c.name, func(t *testing.T) {
-			a, b := c.in[0], c.in[1]
-			aout, bout := c.out[0], c.out[1]
-			p, q := c.len[0], c.len[1]
-			aa, bb, p, q := ReduceComplex128s(a, b)
-			if !EqualComplex128s(aa, aout, tol) ||
-				!EqualComplex128s(bb, bout, tol) ||
-				p != len(aa) || q != len(bb) {
-				t.Errorf("ReduceComplex128s(%v, %v) = %v %v %v %v, want %v %v %v %v", a, b, aa, bb, len(aa), len(bb), aout, bout, p, q)
-			}
-		})
 	}
 }
 
