@@ -7,8 +7,12 @@
 
 # utils
 
-Utility functions for working with numeric types for [Go](https://golang.org).
+Package `utils` provides generic functions for testing numerical functions in [Go](https://golang.org). Please consult the [GoDoc](https://godoc.org/github.com/scientificgo/utils) page for specific details and visit [ScientificGo](https://scientificgo.org) to see more scientific packages for Go.
+
+### Installation
+
+`go get github.com/scientificgo/utils`
 
 ### Usage
 
-`go install -i scientificgo/utils`
+`import github.com/scientificgo/utils`
