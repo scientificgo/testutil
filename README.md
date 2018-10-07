@@ -1,23 +1,23 @@
 ---
 layout: default
-title: utils
+title: testutils
 ---
 
-[![GoDoc](https://godoc.org/github.com/scientificgo/utils?status.svg)](https://godoc.org/github.com/scientificgo/utils)
-[![Go Report Card](https://goreportcard.com/badge/github.com/scientificgo/utils)](https://goreportcard.com/report/github.com/scientificgo/utils)
-[![Coverage](https://codecov.io/gh/scientificgo/utils/branch/master/graph/badge.svg)](https://codecov.io/gh/scientificgo/utils)
-[![Build Status](https://travis-ci.org/scientificgo/utils.svg?branch=master)](https://travis-ci.org/scientificgo/utils)
-[![Build status](https://ci.appveyor.com/api/projects/status/cm9td3k3cwdtxrp5?svg=true)](https://ci.appveyor.com/project/jdparkinson93/utils)
-[![Maintainability](https://api.codeclimate.com/v1/badges/25c1d01f0564034853f8/maintainability)](https://codeclimate.com/github/scientificgo/utils/maintainability)
+[![GoDoc](https://godoc.org/scientificgo.org/testutils?status.svg)](https://godoc.org/scientificgo.org/testutils)
+[![Go Report Card](https://goreportcard.com/badge/scientificgo.org/testutils)](https://goreportcard.com/report/scientificgo.org/testutils)
+[![Coverage](https://codecov.io/gh/scientificgo/testutils/branch/master/graph/badge.svg)](https://codecov.io/gh/scientificgo/testutils)
+[![Build Status](https://travis-ci.org/scientificgo/testutils.svg?branch=master)](https://travis-ci.org/scientificgo/utils)
+[![Build status](https://ci.appveyor.com/api/projects/status/cm9td3k3cwdtxrp5?svg=true)](https://ci.appveyor.com/project/jdparkinson93/testutils)
+[![Maintainability](https://api.codeclimate.com/v1/badges/25c1d01f0564034853f8/maintainability)](https://codeclimate.com/github/scientificgo/testutils/maintainability)
 
-# utils
+# testutils
 
-Package `utils` provides generic functions for testing numerical functions in [Go](https://golang.org). Please consult the [GoDoc](https://godoc.org/github.com/scientificgo/utils) page for specific details and visit [ScientificGo](https://scientificgo.org) to see more scientific packages for Go.
+Package `testutils` provides generic functions for numerical testing in [Go](https://golang.org). Please consult the [GoDoc](https://godoc.org/scientificgo.org/testutils) page for specific details and visit [ScientificGo](https://scientificgo.org) to see more scientific packages for Go.
 
 ### Installation
 
-`go get github.com/scientificgo/utils`
+`go get scientificgo.org/testutils`
 
 ### Usage
 
-`import github.com/scientificgo/utils`
+`import scientificgo.org/testutils`
