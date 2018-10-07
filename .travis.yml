@@ -9,7 +9,7 @@ go:
   - tip
 
 before_install:
-  - go get -t -v ./...
+  - go get -t -v scientificgo.org/testutils
   
 script:
         - go test ./... -v -race -coverprofile=coverage.txt -covermode=atomic -timeout 0
