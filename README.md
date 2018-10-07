@@ -1,3 +1,8 @@
+---
+layout: default
+title: utils
+---
+
 [![GoDoc](https://godoc.org/github.com/scientificgo/utils?status.svg)](https://godoc.org/github.com/scientificgo/utils)
 [![Go Report Card](https://goreportcard.com/badge/github.com/scientificgo/utils)](https://goreportcard.com/report/github.com/scientificgo/utils)
 [![Coverage](https://codecov.io/gh/scientificgo/utils/branch/master/graph/badge.svg)](https://codecov.io/gh/scientificgo/utils)
