@@ -2,11 +2,11 @@
 // Use of this source code is governed by the BSD 3-Clause
 // license that can be found in the LICENSE file.
 
-package utils_test
+package testutils_test
 
 import (
-	. "github.com/scientificgo/utils"
 	"math"
+	. "scientificgo.org/testutils"
 	"testing"
 )
 
