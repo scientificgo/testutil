@@ -4,9 +4,11 @@
 
 package testutils_test
 
-import "math"
-import "testing"
-import . "scientificgo.org/testutils"
+import (
+	"math"
+	"testing"
+	. "scientificgo.org/testutils"
+)
 
 type f4struct struct {
 	Integer   int
@@ -129,7 +131,7 @@ func TestPanicFuncPos(t *testing.T) {
 	f(t, tol, labels, in, out, func1)
 }
 
-func TestWrongIO(t *testing.T) {
+func TestPanicWrongIO(t *testing.T) {
 	var f func(*testing.T, float64, []string, func(int, float64) float64, []float64, []float64)
 	GenerateTest(&f)
 
