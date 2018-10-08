@@ -34,7 +34,7 @@ import "reflect"
 //    var testf func(*testing.T, float64, []string, func(float64, []int) []float64, []float64, [][]int, [][]float64)
 //    GenerateTest(&testf)
 //    // Define inputs for (sub-)tests.
-//    tol := 8 // required accuracy in significant digits
+//    const tol = 8 // required accuracy in significant digits
 //    labels := []string{...}
 //    inputs1 := []float64{...}
 //    inputs2 := [][]int{...}
