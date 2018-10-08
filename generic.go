@@ -4,9 +4,11 @@
 
 package testutils
 
-import "fmt"
-import "testing"
-import "reflect"
+import (
+	"fmt"
+	"testing"
+	"reflect"
+)
 
 // GenerateTest initializes a test function, compatible with the standard
 // package testing, given a pointer fptr. The pointer fptr should point to
