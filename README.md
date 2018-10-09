@@ -20,4 +20,4 @@ Package `testutils` provides generic functions for numerical testing in [Go](htt
 
 ### Usage
 
-`import scientificgo.org/testutils`
+`import "scientificgo.org/testutils"`
