@@ -11,93 +11,76 @@ import (
 	"testing"
 )
 
-const tol = 10
-
 var (
-	NaN  = math.NaN()
-	Inf  = math.Inf(1)
-	cNaN = complex(NaN, NaN)
-	cInf = complex(Inf, Inf)
+	nan  = math.NaN()
+	inf  = math.Inf(1)
+	cnan = complex(nan, nan)
+	cinf = complex(inf, inf)
 )
 
 func TestEqualFloat64s(t *testing.T) {
+	const _tol = 4
 	cases := []struct {
-		x, y []float64
-		tol  float64
-		out  bool
+		Label    string
+		In1, In2 []float64
+		In3      float64
+		Out      bool
 	}{
-		{[]float64{1, 2}, []float64{1, 2, 3}, 10, false},
-		{[]float64{0, 0}, []float64{0, 0}, 10, true},
-		{[]float64{0, NaN}, []float64{0, NaN}, 10, true},
-		{[]float64{0.9999, 1.1121}, []float64{0.999, 1.112}, 5, false},
-		{[]float64{0.99, 1.1}, []float64{0.99999, 1.1}, 2, true},
-		{[]float64{0.99, 1, 0}, []float64{1, 0.99}, 2, false},
+		{"1", []float64{1, 2}, []float64{1, 2, 3}, _tol, false},
+		{"2", []float64{0, 0}, []float64{0, 0}, _tol, true},
+		{"3", []float64{0, nan}, []float64{0, nan}, _tol, true},
+		{"4", []float64{0.9999, 1.1121}, []float64{0.999, 1.112}, _tol, false},
+		{"5", []float64{0.9999, 1.1}, []float64{0.99999, 1.1}, _tol, true},
+		{"6", []float64{0.99, 1, 0}, []float64{1, 0.99}, _tol, false},
+		{"7", []float64{0, 0}, []float64{0, 0.0000001}, _tol, true},
 	}
-	for _, c := range cases {
-		res := EqualFloat64s(c.x, c.y, c.tol)
-		if res != c.out {
-			t.Errorf("EqualFloat64s(%v, %v, %v) = %v, want %v", c.x, c.y, c.tol, res, c.out)
-		}
-	}
+	Test(t, 0, EqualFloat64s, cases)
 }
 
 func TestEqualComplex128s(t *testing.T) {
+	const _tol = 4
 	cases := []struct {
-		x, y []complex128
-		tol  float64
-		out  bool
+		Label    string
+		In1, In2 []complex128
+		In3      float64
+		Out      bool
 	}{
-		{[]complex128{1 + 1i, 2 + 1i, 3 - 3i}, []complex128{1 + 1i, 2 + 1i}, 10, false},
-		{[]complex128{1 + 1i, 2 + 1i, 3 - 3i}, []complex128{1 + 1i, 2 + 1i, 3.01 - 3i}, 10, false},
+		{"1", []complex128{1 + 1i, 2}, []complex128{1, 2 - 19191i, 3}, _tol, false},
+		{"2", []complex128{0, 1i}, []complex128{0, 1i}, _tol, true},
+		{"3", []complex128{0, cnan}, []complex128{0, cnan}, _tol, true},
+		{"4", []complex128{0.9999i, 1.1121}, []complex128{0.999i, 1.112}, _tol, false},
+		{"5", []complex128{0.9999 + 0.007i, 1.1}, []complex128{0.99999 + 0.007i, 1.1}, _tol, true},
+		{"6", []complex128{0.99, 1 - 1i}, []complex128{1, 0.99 - 1i}, _tol, false},
 	}
-	for _, c := range cases {
-		res := EqualComplex128s(c.x, c.y, c.tol)
-		if res != c.out {
-			t.Errorf("EqualComplex128s(%v, %v, %v) = %v, want %v", c.x, c.y, c.tol, res, c.out)
-		}
-	}
+	Test(t, 0, EqualComplex128s, cases)
 }
 
 func TestAllFloat64s(t *testing.T) {
-	var f func(*testing.T, float64, []string, func([]float64, func(float64) bool) bool, [][]float64, [](func(float64) bool), []bool)
-	GenerateTest(&f)
-
-	labels := []string{"Number", "NotInf1", "Zero"}
-	in1 := [][]float64{
-		{1, 2, NaN, NaN, NaN},
-		{1, 2, 3, 4, Inf},
-		{0, 0, 0, 0, 0},
+	cases := []struct {
+		Label string
+		In1   []float64
+		In2   func(float64) bool
+		Out   bool
+	}{
+		{"AllNaN", []float64{1, 2, nan}, math.IsNaN, false},
+		{"AllFinite", []float64{1, 2, inf}, func(x float64) bool { return !math.IsInf(x, 0) }, false},
+		{"AllZero", []float64{0, 0, 0}, func(x float64) bool { return x == 0 }, true},
 	}
 
-	in2 := []func(float64) bool{
-		func(x float64) bool { return math.IsNaN(x) },
-		func(x float64) bool { return !math.IsInf(x, 0) },
-		func(x float64) bool { return x == 0 },
-	}
-
-	out := []bool{false, false, true}
-
-	f(t, tol, labels, AllFloat64s, in1, in2, out)
+	Test(t, 0, AllFloat64s, cases)
 }
 
 func TestAllComplex128s(t *testing.T) {
-	var f func(*testing.T, float64, []string, func([]complex128, func(complex128) bool) bool, [][]complex128, [](func(complex128) bool), []bool)
-	GenerateTest(&f)
-
-	labels := []string{"Number", "NotInf1", "Zero"}
-	in1 := [][]complex128{
-		{1, 2, cNaN, cNaN, cNaN},
-		{1, -2i, 3, 4 + 1i, cInf},
-		{0, 0, -0, 0, 0},
+	cases := []struct {
+		Label string
+		In1   []complex128
+		In2   func(complex128) bool
+		Out   bool
+	}{
+		{"AllNaN", []complex128{1, 2, cnan}, cmplx.IsNaN, false},
+		{"AllFinite", []complex128{1, 2, cinf}, func(x complex128) bool { return !cmplx.IsInf(x) }, false},
+		{"AllZero", []complex128{0, 0, 0}, func(x complex128) bool { return x == 0 }, true},
 	}
 
-	in2 := []func(complex128) bool{
-		func(x complex128) bool { return cmplx.IsNaN(x) },
-		func(x complex128) bool { return !cmplx.IsInf(x) },
-		func(x complex128) bool { return x == 0 },
-	}
-
-	out := []bool{false, false, true}
-
-	f(t, tol, labels, AllComplex128s, in1, in2, out)
+	Test(t, 0, AllComplex128s, cases)
 }
