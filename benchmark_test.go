@@ -1,3 +1,7 @@
+// Copyright (c) 2018, Jack Parkinson. All rights reserved.
+// Use of this source code is governed by the BSD 3-Clause
+// license that can be found in the LICENSE file.
+
 package testutils_test
 
 import (
@@ -11,7 +15,7 @@ func BenchmarkAny(b *testing.B) {
 		In1, In2 interface{}
 	}{
 		{"float64", func(x float64) bool { return x == 0 }, []float64{0.1, -0.0001, 0.01, 0, 0.000000000000000000001}},
-		{"map", func(x map[int]int) bool { return x == nil }, []map[int]int{map[int]int{}, map[int]int{0: 1}}},
+		{"map", func(x map[int]int) bool { return x == nil }, []map[int]int{{}, {0: 1}}},
 	}
 	Benchmark(b, Any, cases)
 }
