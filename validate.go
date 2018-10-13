@@ -1,9 +1,8 @@
-package testutils
+// Copyright (c) 2018, Jack Parkinson. All rights reserved.
+// Use of this source code is governed by the BSD 3-Clause
+// license that can be found in the LICENSE file.
 
-// Functions in validate.go are used to validate data for exported API functions;
-// As t.Errorf is called, getting 100% coverage is impossible (with passing tests/builds).
-// Generally, the coverage of these functions can be ignored; they are type checks and other
-// consistency checks (slice lengths, etc.) and whilst lengthy are logically very simple.
+package testutils
 
 import (
 	"fmt"
