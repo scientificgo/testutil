@@ -12,7 +12,7 @@ install:
   - go get -t -v scientificgo.org/testutils
   
 script:
-  - go test scientificgo.org/testutils -v -race -coverprofile=coverage.txt -covermode=atomic -timeout 0
+  - go test scientificgo.org/testutils -bench=. -v -race -coverprofile=coverage.txt -covermode=atomic -timeout 0
 
 after_success:
   - bash <(curl -s https://codecov.io/bash) || echo "Codecov did not collect coverage reports"
