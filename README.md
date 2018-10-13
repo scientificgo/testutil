@@ -8,7 +8,7 @@ title: testutils
 [![Coverage](https://codecov.io/gh/scientificgo/testutils/branch/master/graph/badge.svg)](https://codecov.io/gh/scientificgo/testutils)
 [![Build Status](https://travis-ci.org/scientificgo/testutils.svg?branch=master)](https://travis-ci.org/scientificgo/testutils)
 [![Build status](https://ci.appveyor.com/api/projects/status/m7yt1gy6g5bpilox?svg=true)](https://ci.appveyor.com/project/jdparkinson93/testutils)
-[![Maintainability](https://api.codeclimate.com/v1/badges/25c1d01f0564034853f8/maintainability)](https://codeclimate.com/github/scientificgo/testutils/maintainability)
+[![Maintainability](https://api.codeclimate.com/v1/badges/2ea76783cfe482528242/maintainability)](https://codeclimate.com/github/scientificgo/testutils/maintainability)
 
 # testutils
 
