@@ -12,7 +12,7 @@ title: testutils
 
 # testutils
 
-Package `testutils` provides generic functions for numerical testing in [Go](https://golang.org). Please consult the [GoDoc](https://godoc.org/scientificgo.org/testutils) page for specific details and visit [ScientificGo](https://scientificgo.org) to see more scientific packages for Go.
+Package `testutils` provides generic functions for testing and benchmarking in [Go](https://golang.org). Please consult the [GoDoc](https://godoc.org/scientificgo.org/testutils) page for specific details and visit [ScientificGo](https://scientificgo.org) to see more scientific packages for Go.
 
 ### Installation
 
