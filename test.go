@@ -9,54 +9,80 @@ import (
 	"testing"
 )
 
-// Test is a generic testing tool that tests the outputs of an
-// arbitrary function f to the specified number of significant digits
-// (for float or complex types).
+// Test runs a sub-test for each case in cs using the function(s) in fs.
 //
-// If f is an array [2]func(...)(...) then the respective outputs
-// are tested against each other; otherwise the expected output
-// should be specified.
+// If one function is given, then the return values for a given case are
+// tested against its expected outputs.
 //
-// cases must be a slice of structs that:
-// (i) have a first field that is a string;
-// (ii) export all fields.
-func Test(t *testing.T, digits float64, f, cases interface{}) {
-	casesv, f1, f2, nCases, nIn, nOut := validateTest(f, cases)
+// Alternatively, if two functions are given then their respective return
+// values for a given case are tested against each other; cases do not
+// need to contain the expected outputs.
+func Test(t *testing.T, digits float64, cs Cases, fs ...Func) {
+	cvs, nc, nfc := parseCases(cs)
+	f1v, f2v := parseFuncs(fs...)
 
-	// Iterate over each case and run a sub-test.
-	for i := 0; i < nCases; i++ {
-		c := casesv.Index(i)
-		t.Run(c.Field(0).String(), func(t *testing.T) {
-			inputs := sliced(c, 1, nIn)
-			var outputs []reflect.Value
-			if f2.IsNil() {
-				outputs = sliced(c, 1+nIn, nOut)
-			} else {
-				outputs = f2.Call(inputs)
-			}
-			results := f1.Call(inputs)
-			for j := 0; j < nOut; j++ {
-				execSubtest(t, results[j], outputs[j], j, digits)
-			}
-		})
+	nIn := f1v.Type().NumIn()
+	nOut := f1v.Type().NumOut()
+
+	validateTestIO(nIn, nOut, nfc, f2v.IsNil())
+
+	for i := 0; i < nc; i++ {
+		subtest(t, cvs.Index(i), f1v, f2v, nIn, nOut, digits)
 	}
 }
 
-func execSubtest(t *testing.T, result, output reflect.Value, i int, digits float64) {
-	if j, ok := equal(result, output, digits); !ok {
-		if i < 0 {
-			t.Errorf("Error: length mismatch between results and expected outputs.")
-		}
-		if j < 0 {
-			t.Errorf("Error: length mismatch between %v-th result and expected output.", i)
-		}
+// validateTestIO panics if the provided arguments are inconsistent.
+func validateTestIO(nIn, nOut, nfc int, f2vIsNil bool) {
+	panicIf(
+		nfc-1 != nIn+nOut && f2vIsNil,
+		"Wrong number of input/output slices. Got %v, want %v.",
+		nfc-1, nIn+nOut,
+	)
+	panicIf(
+		nfc-1 != nIn && !f2vIsNil,
+		"Wrong number of input slices. Got %v, want %v.",
+		nfc-1, nIn,
+	)
+}
 
-		if k := output.Kind(); k == reflect.Slice {
-			t.Errorf("Error in results[%v][%v]. Got %v, want %v.", i, j, output.Index(j), result.Index(j))
-		} else if k == reflect.Struct {
-			t.Errorf("Error in results[%v].%v. Got %v, want %v.", i, output.Type().Field(j).Name, output.Field(j), result.Field(j))
+// subtest runs a sub-test for a given case.
+func subtest(t *testing.T, cv casev, f1v, f2v funcv, nIn, nOut int, digits float64) {
+	t.Run(name(cv), func(t *testing.T) {
+		var in, out, res []reflect.Value
+
+		in = sliceFrom(cv, 1, nIn)
+		if f2v.IsNil() {
+			out = sliceFrom(cv, 1+nIn, nOut)
 		} else {
-			t.Errorf("Error in results[%v]. Got %v, want %v.", i, output, result)
+			out = f2v.Call(in)
 		}
+		res = f1v.Call(in)
+
+		for i := 0; i < nOut; i++ {
+			ri := res[i]
+			oi := out[i]
+			handleSubtest(t, i, ri, oi, digits)
+		}
+	})
+}
+
+// handleSubtest checks whether io and ri are equal and reports if they are not.
+func handleSubtest(t *testing.T, i int, oi, ri reflect.Value, digits float64) {
+	j, ok := equal(ri, oi, digits)
+	if ok {
+		return
+	}
+
+	if j < 0 {
+		t.Errorf("Error: length mismatch between %v-th result and expected output.", i)
+	}
+	if kind := oi.Kind(); kind == reflect.Slice {
+		t.Errorf("Error in results[%v][%v]. Got %v, want %v.",
+			i, j, oi.Index(j), ri.Index(j))
+	} else if kind == reflect.Struct {
+		t.Errorf("Error in results[%v].%v. Got %v, want %v.",
+			i, oi.Type().Field(j).Name, oi.Field(j), ri.Field(j))
+	} else {
+		t.Errorf("Error in results[%v]. Got %v, want %v.", i, oi, ri)
 	}
 }

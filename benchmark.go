@@ -6,22 +6,26 @@ package testutils
 
 import "testing"
 
-// Benchmark is a generic testing tool that benchmarks the outputs of an
-// arbitrary function f to the specified number of significant digits
-// (for float or complex types).
-//
-// cases must be a slice of structs that:
-// (i) have a first field that is a string;
-// (ii) export all fields.
-func Benchmark(b *testing.B, f interface{}, cases interface{}) {
-	casesv, f1, nCases, nIn := validateBenchmark(f, cases)
-	for i := 0; i < nCases; i++ {
-		c := casesv.Index(i)
-		inputs := sliced(c, 1, nIn)
-		b.Run(c.Field(0).String(), func(b *testing.B) {
-			for k := 0; k < b.N; k++ {
-				_ = f1.Call(inputs)
-			}
-		})
+// Benchmark runs a sub-benchmark for each case in cs using the function(s) in fs.
+func Benchmark(b *testing.B, cs Cases, f Func) {
+	cvs, nc, nfc := parseCases(cs)
+	fv, _ := parseFuncs(f)
+
+	nIn := fv.Type().NumIn()
+	panicIf(nfc-1 != nIn, "Wrong number of input slices. Got %v, want %v.", nfc-1, nIn)
+
+	for i := 0; i < nc; i++ {
+		subbench(b, cvs.Index(i), fv, nIn)
 	}
+}
+
+// subbench runs a sub-benchmark for the case cv using function fv.
+func subbench(b *testing.B, cv casev, fv funcv, nIn int) {
+	inputs := sliceFrom(cv, 1, nIn)
+	b.Run(name(cv), func(b *testing.B) {
+		for k := 0; k < b.N; k++ {
+			_ = fv.Call(inputs)
+		}
+	})
+
 }

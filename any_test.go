@@ -32,7 +32,7 @@ func TestAny(t *testing.T) {
 		{"StructHelloString", func(x mystruct) bool { return x.String == "Hello" }, []mystruct{{10, "Hello", math.Pi}, {100, "Hello!", math.Pi * math.Pi}}, true},
 		{"StructPiFloat", func(x mystruct) bool { return x.Float64 == math.Pi }, []mystruct{{1, "Hey", math.E}, {2, "Heey", math.Ln2}}, false},
 	}
-	Test(t, 0, Any, cases)
+	Test(t, 0.0, cases, Any)
 }
 
 func TestAll(t *testing.T) {
@@ -56,5 +56,5 @@ func TestAll(t *testing.T) {
 		{"StructHelloString", func(x mystruct) bool { return x.String == "Hello" }, []mystruct{{10, "Hello", math.Pi}, {100, "Hello", math.Pi * math.Pi}}, true},
 		{"StructPiFloat", func(x mystruct) bool { return x.Float64 == math.Pi }, []mystruct{{1, "Hey", math.E}, {2, "Heey", math.Ln2}}, false},
 	}
-	Test(t, 0.0, All, cases)
+	Test(t, 0.0, cases, All)
 }
