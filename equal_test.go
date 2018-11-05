@@ -54,5 +54,5 @@ func TestEqual(t *testing.T) {
 		{"", math.Jn, math.Jn, _tol, true},
 		{"", math.Jn, math.Yn, _tol, false},
 	}
-	Test(t, float64(0), Equal, cases)
+	Test(t, 0.0, cases, Equal)
 }

@@ -8,22 +8,35 @@ import (
 	"reflect"
 )
 
-// Any returns true if the function f evaluates to true
-// for any argument in x.
-func Any(f interface{}, x ...interface{}) bool {
+// Any returns true if the function f evaluates to true for any argument in xs.
+func Any(f Func, xs ...interface{}) bool {
 	// Get function and validate it returns bool.
 	fv := reflect.ValueOf(f)
-	n := len(x)
-	validateAny(fv, n)
+	nArg := len(xs)
+	//validateAny(fv, n)
 
-	args := make([]reflect.Value, n)
-	l := reflect.ValueOf(x[0]).Len()
+	k := fv.Kind()
+	panicIf(k != reflect.Func, "Wrong input type. Got %v, want %v.", k, "func")
+
+	k = fv.Type().Out(0).Kind()
+	panicIf(k != reflect.Bool, "Wrong output type. Got %v, want %v", k, reflect.Bool)
+
+	nIn := fv.Type().NumIn()
+	panicIf(nArg != nIn, "Wrong number of input slices. Got %v, want %v.", nArg, nIn)
+
+	nOut := fv.Type().NumOut()
+	panicIf(nOut != 1, "Wrong number of output slices. Got %v, want %v.", nOut, 1)
+
+	args := make([]reflect.Value, nArg)
+	l := reflect.ValueOf(xs[0]).Len()
+
+	// Iterate over the input length.
 	for i := 0; i < l; i++ {
-		for j, xj := range x {
-			xjv := reflect.ValueOf(xj)
-			args[j] = underlyingValue(xjv.Index(i))
+		// Iterate across all inputs and construct the slice for calling f.
+		for j, x := range xs {
+			xv := reflect.ValueOf(x)
+			args[j] = underlying(xv.Index(i))
 		}
-
 		if fv.Call(args)[0].Interface().(bool) {
 			return true
 		}
@@ -31,11 +44,11 @@ func Any(f interface{}, x ...interface{}) bool {
 	return false
 }
 
-// All returns true if the function f evaluates to true
-// for all arguments in x.
-func All(f interface{}, x ...interface{}) bool {
-	notf := func(y interface{}) bool {
-		return !reflect.ValueOf(f).Call([]reflect.Value{reflect.ValueOf(y)})[0].Interface().(bool)
+// All returns true if the function f evaluates to true for all arguments in x.
+func All(f Func, x ...interface{}) bool {
+	g := func(y interface{}) bool {
+		ys := []reflect.Value{reflect.ValueOf(y)}
+		return !reflect.ValueOf(f).Call(ys)[0].Interface().(bool)
 	}
-	return !Any(notf, x...)
+	return !Any(g, x...)
 }

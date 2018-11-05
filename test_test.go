@@ -15,14 +15,14 @@ type f4struct struct {
 	Remainder float64
 }
 
-func func1(x float64) float64        { return x * x }
-func func2(x complex128) complex128  { return x * x }
-func func3(s string) bool            { return len(s) < 6 && len(s) > 3 }
-func func4(x float64) f4struct       { return f4struct{int(x), x - float64(int(x))} }
-func func5a(x float64) float64       { return 2 * x }
-func func5b(x float64) float64       { return x + x }
-func func6(n int, x float64) float64 { return math.Jn(n, x) }
-func func7(n int, x float64) []float64 {
+func f1(x float64) float64        { return x * x }
+func f2(x complex128) complex128  { return x * x }
+func f3(s string) bool            { return len(s) < 6 && len(s) > 3 }
+func f4(x float64) f4struct       { return f4struct{int(x), x - float64(int(x))} }
+func f5a(x float64) float64       { return 2 * x }
+func f5b(x float64) float64       { return x + x }
+func f6(n int, x float64) float64 { return math.Jn(n, x) }
+func f7(n int, x float64) []float64 {
 	res := make([]float64, n)
 	for i := 0; i < n; i++ {
 		res[i] = math.Jn(i+1, x)
@@ -35,11 +35,11 @@ func TestFunc1(t *testing.T) {
 		Label   string
 		In, Out interface{}
 	}{
-		{"1", 0.1, func1(0.1)},
-		{"2", 0.2, func1(0.2)},
-		{"3", 0.3, func1(0.3)},
+		{"1", 0.1, f1(0.1)},
+		{"2", 0.2, f1(0.2)},
+		{"3", 0.3, f1(0.3)},
 	}
-	Test(t, acc, func1, cases)
+	Test(t, acc, cases, f1)
 }
 
 func TestFunc2(t *testing.T) {
@@ -47,11 +47,11 @@ func TestFunc2(t *testing.T) {
 		Label   string
 		In, Out interface{}
 	}{
-		{"1", 1i, func2(1i)},
-		{"2", 0.5 + 0.5i, func2(0.5 + 0.5i)},
-		{"3", 1 - 1i, func2(1 - 1i)},
+		{"1", 1i, f2(1i)},
+		{"2", 0.5 + 0.5i, f2(0.5 + 0.5i)},
+		{"3", 1 - 1i, f2(1 - 1i)},
 	}
-	Test(t, acc, func2, cases)
+	Test(t, acc, cases, f2)
 }
 
 func TestFunc3(t *testing.T) {
@@ -64,7 +64,7 @@ func TestFunc3(t *testing.T) {
 		{"3", "frog", true},
 	}
 
-	Test(t, acc, func3, cases)
+	Test(t, acc, cases, f3)
 }
 
 func TestFunc4(t *testing.T) {
@@ -77,7 +77,7 @@ func TestFunc4(t *testing.T) {
 		{"3", math.Pi, f4struct{3, math.Pi - 3}},
 	}
 
-	Test(t, acc, func4, cases)
+	Test(t, acc, cases, f4)
 }
 
 func TestFunc5(t *testing.T) {
@@ -91,7 +91,7 @@ func TestFunc5(t *testing.T) {
 		{"4", nan},
 	}
 
-	Test(t, acc, [2]func(float64) float64{func5a, func5b}, cases)
+	Test(t, acc, cases, f5a, f5b)
 }
 
 func TestFunc6(t *testing.T) {
@@ -99,12 +99,12 @@ func TestFunc6(t *testing.T) {
 		Label         string
 		In1, In2, Out interface{}
 	}{
-		{"1", 1, 0.1, func6(1, 0.1)},
-		{"1", 2, 0.2, func6(2, 0.2)},
-		{"3", 3, 0.3, func6(3, 0.3)},
+		{"1", 1, 0.1, f6(1, 0.1)},
+		{"1", 2, 0.2, f6(2, 0.2)},
+		{"3", 3, 0.3, f6(3, 0.3)},
 	}
 
-	Test(t, acc, func6, cases)
+	Test(t, acc, cases, f6)
 }
 
 func TestFunc7(t *testing.T) {
@@ -112,12 +112,12 @@ func TestFunc7(t *testing.T) {
 		Label         string
 		In1, In2, Out interface{}
 	}{
-		{"1", 1, 0.1, func7(1, 0.1)},
-		{"1", 2, 0.2, func7(2, 0.2)},
-		{"3", 3, 0.3, func7(3, 0.3)},
+		{"1", 1, 0.1, f7(1, 0.1)},
+		{"1", 2, 0.2, f7(2, 0.2)},
+		{"3", 3, 0.3, f7(3, 0.3)},
 	}
 
-	Test(t, acc, func7, cases)
+	Test(t, acc, cases, f7)
 }
 
 func TestPanic(t *testing.T) {
@@ -130,10 +130,10 @@ func TestPanic(t *testing.T) {
 		Label         string
 		In1, In2, Out interface{}
 	}{
-		{"1", 1, 0.1, func1(0.1)},
-		{"1", 2, 0.2, func1(0.2)},
-		{"3", 3, 0.3, func1(0.3)},
+		{"1", 1, 0.1, f1(0.1)},
+		{"1", 2, 0.2, f1(0.2)},
+		{"3", 3, 0.3, f1(0.3)},
 	}
 
-	Test(t, acc, []func(float64) float64{func1}, cases)
+	Test(t, acc, cases, f1)
 }

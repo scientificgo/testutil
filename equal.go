@@ -133,13 +133,13 @@ func equalNaN(x, y float64) bool {
 	return math.IsNaN(x) && math.IsNaN(y)
 }
 
-func mockArgs(x reflect.Value) []reflect.Value {
+func mockArgs(x funcv) []reflect.Value {
 	r := rand.New(rand.NewSource(99))
 	nIn := x.Type().NumIn()
 	args := make([]reflect.Value, nIn)
 	for i := 0; i < nIn; i++ {
 		v, ok := quick.Value(x.Type().In(i), r)
-		panicf(!ok, "Error. Could not generate mock arguments.")
+		panicIf(!ok, "Error. Could not generate mock arguments.")
 		args[i] = v
 	}
 	return args
