@@ -1,1 +1,1 @@
-module scientificgo.org/testutils
+module scientificgo.org/testutil

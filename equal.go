@@ -2,7 +2,7 @@
 // Use of this source code is governed by the BSD 3-Clause
 // license that can be found in the LICENSE file.
 
-package testutils
+package testutil
 
 import (
 	"math"
@@ -24,8 +24,12 @@ import (
 //
 // For other types (int, bool, string, char, etc.) x and y are equal
 // if x == y is true.
-func Equal(x, y interface{}, digits float64) bool {
-	_, ok := equal(reflect.ValueOf(x), reflect.ValueOf(y), digits)
+func Equal(x, y interface{}, digits ...float64) bool {
+	d := math.NaN()
+	if len(digits) > 0 {
+		d = digits[0]
+	}
+	_, ok := equal(reflect.ValueOf(x), reflect.ValueOf(y), d)
 	return ok
 }
 
@@ -103,16 +107,20 @@ end:
 // equalFloat returns true if x and y are equal within the specified tolerance
 // (i.e. to tol significant figures).
 func equalFloat(x, y, digits float64) bool {
-	if x == y || equalNaN(x, y) {
-		return true
+	if math.IsNaN(digits) || math.IsInf(digits, 0) {
+		return x == y || equalNaN(x, y)
 	}
-	if x != 0 && y != 0 && sd(1-x/y) >= digits {
+
+	switch {
+	case x == y || equalNaN(x, y):
 		return true
-	}
-	if sd(x-y) >= digits {
+	case x != 0 && y != 0 && sd(1-x/y) >= digits:
 		return true
+	case sd(x-y) >= digits:
+		return true
+	default:
+		return false
 	}
-	return false
 }
 
 // equalComplex returns true if x and y are equal to the given number of significant digits.
