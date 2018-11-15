@@ -2,5 +2,6 @@
 // Use of this source code is governed by the BSD 3-Clause
 // license that can be found in the LICENSE file.
 
-// Package testutils provides generic functions for numerical testing.
-package testutils // import "scientificgo.org/testutils"
+// Package testutil provides generic functions for testing and benchmarking
+// with go test, as well as type-agnostic implementations of Equal, Any and All.
+package testutil // import "scientificgo.org/testutil"
