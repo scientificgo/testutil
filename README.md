@@ -7,8 +7,6 @@ title: testutil
 [![Go Report Card](https://goreportcard.com/badge/github.com/scientificgo/testutil)](https://goreportcard.com/report/github.com/scientificgo/testutil)
 [![Coverage](https://codecov.io/gh/scientificgo/testutil/branch/master/graph/badge.svg)](https://codecov.io/gh/scientificgo/testutil)
 [![Build Status](https://travis-ci.org/scientificgo/testutil.svg?branch=master)](https://travis-ci.org/scientificgo/testutil)
-[![Build status](https://ci.appveyor.com/api/projects/status/m7yt1gy6g5bpilox?svg=true)](https://ci.appveyor.com/project/jdparkinson93/testutil)
-[![Maintainability](https://api.codeclimate.com/v1/badges/2ea76783cfe482528242/maintainability)](https://codeclimate.com/github/scientificgo/testutil/maintainability)
 
 # testutil
 
