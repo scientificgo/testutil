@@ -1,4 +1,4 @@
-// Copyright (c) 2018, Jack Parkinson. All rights reserved.
+// Copyright (c) 2020, Jack Parkinson. All rights reserved.
 // Use of this source code is governed by the BSD 3-Clause
 // license that can be found in the LICENSE file.
 
@@ -9,15 +9,43 @@ import (
 	"testing"
 )
 
-// Test runs a sub-test for each case in cs using the function(s) in fs.
+// Test is a generic case-driven testing function that accepts a
+// slice of cases, a numerical tolerance and either 1 or 2 functions
+// to be tested. A sub-test is run for each case.
 //
-// If one function is given, then the return values for a given case are
-// tested against its expected outputs.
+// If 1 function is provided, then its output is tested against
+// the outputs provided in each case.
 //
-// Alternatively, if two functions are given then their respective return
-// values for a given case are tested against each other; cases do not
-// need to contain the expected outputs.
-func Test(t *testing.T, digits float64, cs Cases, fs ...Func) {
+// If 2 functions are provided, then their respective outputs are
+// compared, using the inputs provided in each case.
+//
+// For example, to test a function called SquareRoot on some cases, and
+// against the standard library function math.Sqrt, where SquareRoot,
+// cases and the tolerance tol are defined as
+//
+//  func SquareRoot(x float64) float64 { ... }
+//
+//  var cases = []struct{
+//    Label     string
+//    In1, Out1 interface{}
+//  }{
+//    {"Case1", 1., 1.},
+//    {"Case2", 4., 2.},
+//    {"Case3", -1., math.NaN()}, 
+//  }
+//
+//  var tol = 1.e-10
+//
+// then the test functions would be
+//
+//  func TestSquareRoot(t *testing.T) {
+//    testutil.Test(t, tol, cases, SquareRoot)
+//  }
+//
+//  func TestSquareRootvsSqrt(t *testing.T) {
+//    testutil.Test(t, tol, cases, SquareRoot, math.Sqrt)
+//  }
+func Test(t *testing.T, tol float64, cs Cases, fs ...Func) {
 	cvs, nc, nfc := parseCases(cs)
 	f1v, f2v := parseFuncs(fs...)
 
@@ -27,7 +55,7 @@ func Test(t *testing.T, digits float64, cs Cases, fs ...Func) {
 	validateTestIO(nIn, nOut, nfc, f2v.IsNil())
 
 	for i := 0; i < nc; i++ {
-		subtest(t, cvs.Index(i), f1v, f2v, nIn, nOut, digits)
+		subtest(t, cvs.Index(i), f1v, f2v, nIn, nOut, tol)
 	}
 }
 
@@ -46,7 +74,7 @@ func validateTestIO(nIn, nOut, nfc int, f2vIsNil bool) {
 }
 
 // subtest runs a sub-test for a given case.
-func subtest(t *testing.T, cv casev, f1v, f2v funcv, nIn, nOut int, digits float64) {
+func subtest(t *testing.T, cv casev, f1v, f2v funcv, nIn, nOut int, tol float64) {
 	t.Run(name(cv), func(t *testing.T) {
 		var in, out, res []reflect.Value
 
@@ -61,14 +89,14 @@ func subtest(t *testing.T, cv casev, f1v, f2v funcv, nIn, nOut int, digits float
 		for i := 0; i < nOut; i++ {
 			ri := res[i]
 			oi := out[i]
-			handleSubtest(t, i, ri, oi, digits)
+			handleSubtest(t, i, ri, oi, tol)
 		}
 	})
 }
 
 // handleSubtest checks whether io and ri are equal and reports if they are not.
-func handleSubtest(t *testing.T, i int, oi, ri reflect.Value, digits float64) {
-	j, ok := equal(ri, oi, digits)
+func handleSubtest(t *testing.T, i int, oi, ri reflect.Value, tol float64) {
+	j, ok := equal(ri, oi, tol)
 	if ok {
 		return
 	}

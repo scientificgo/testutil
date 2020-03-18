@@ -1,4 +1,4 @@
-// Copyright (c) 2018, Jack Parkinson. All rights reserved.
+// Copyright (c) 2020, Jack Parkinson. All rights reserved.
 // Use of this source code is governed by the BSD 3-Clause
 // license that can be found in the LICENSE file.
 
@@ -7,6 +7,10 @@ package testutil
 import "testing"
 
 // Benchmark runs a sub-benchmark for each case in cs using the function(s) in fs.
+//
+// For example, given some cases and a function MyFunc, the benchmark function would be
+//
+//  func BenchmarkMyFunc(b *testing.B) { testutil.Benchmark(b, cases, MyFunc) }
 func Benchmark(b *testing.B, cs Cases, f Func) {
 	cvs, nc, nfc := parseCases(cs)
 	fv, _ := parseFuncs(f)
@@ -27,5 +31,4 @@ func subbench(b *testing.B, cv casev, fv funcv, nIn int) {
 			_ = fv.Call(inputs)
 		}
 	})
-
 }
