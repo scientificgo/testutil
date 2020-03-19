@@ -72,11 +72,21 @@ func equal(x, y reflect.Value, tol float64) (i int, ok bool) {
 		if ok = len(xkeys) == n; !ok {
 			goto end
 		}
-		for i = 0; i < n; i++ {
-            if _, ok = equal(xkeys[i], ykeys[i], tol); !ok {
+		for i =0; i < n; i++ {
+            // check that each key in xkeys is in ykeys. Need to iterate over all xkeys
+            // for each ykey since ordering of keys from maps is not deterministic, so
+            // the keys could come in different orders even if xkeys and ykeys contain
+            // the same values.
+            ykey := ykeys[i]
+            for _, xkey := range xkeys {
+                if _, ok = equal(xkey, ykey, tol); ok {
+                    break
+                }
+            }
+            if !ok {
                 goto end
             }
-			if _, ok = equal(x.MapIndex(xkeys[i]), y.MapIndex(ykeys[i]), tol); !ok {
+			if _, ok = equal(x.MapIndex(ykey), y.MapIndex(ykey), tol); !ok {
 				goto end
 			}
 		}
