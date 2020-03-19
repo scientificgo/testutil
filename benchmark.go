@@ -16,7 +16,7 @@ func Benchmark(b *testing.B, cs Cases, f Func) {
 	fv, _ := parseFuncs(f)
 
 	nIn := fv.Type().NumIn()
-	panicIf(nfc-1 != nIn, "Wrong number of input slices. Got %v, want %v.", nfc-1, nIn)
+	panicIf(nfc-1 < nIn, "Wrong number of inputs. Got %v, want %v.", nfc-1, nIn)
 
 	for i := 0; i < nc; i++ {
 		subbench(b, cvs.Index(i), fv, nIn)
@@ -25,6 +25,7 @@ func Benchmark(b *testing.B, cs Cases, f Func) {
 
 // subbench runs a sub-benchmark for the case cv using function fv.
 func subbench(b *testing.B, cv casev, fv funcv, nIn int) {
+    // Start from 1, since 0 is the label
 	inputs := sliceFrom(cv, 1, nIn)
 	b.Run(name(cv), func(b *testing.B) {
 		for k := 0; k < b.N; k++ {

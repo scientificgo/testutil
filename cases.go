@@ -21,32 +21,38 @@ type Cases interface{}
 
 // parseCases converts cases reflect values and performs basic validation checks.
 // If any checks fail, parse panics.
+// nc is the number of cases, nf is the number of fields in a case (label + inputs + outputs)
 func parseCases(cs Cases) (cvs casesv, nc, nf int) {
 	cvs = reflect.ValueOf(cs)
 
+    // Ensure cs is a slice of cases.
 	kc := cvs.Kind()
 	panicIf(kc != reflect.Slice,
 		"Wrong kind of argument. Got %v, want %v.",
 		kc, "slice",
 	)
 
+    // Ensure there is at least 1 case.
 	nc = cvs.Len()
 	panicIf(nc == 0, "No cases.")
 
+    // Ensure each case is a struct.
 	kc = cvs.Type().Elem().Kind()
 	panicIf(kc != reflect.Struct,
 		"Wrong input type. Got []%v, want []%v",
 		kc, "struct",
 	)
 
+    // Ensure cases have at least 1 field, for the label.
 	nf = cvs.Index(0).NumField()
 	panicIf(nf == 0, "Empty cases.")
 
-	kc = cvs.Index(0).Field(0).Kind()
+    // Ensure the first field, the label, is a string.
+	kfc := cvs.Index(0).Field(0).Kind()
 	panicIf(
-		kc != reflect.String,
+		kfc != reflect.String,
 		"Wrong type for struct label. Got %v, want %v.",
-		kc, "string",
+		kfc, "string",
 	)
 
 	return
