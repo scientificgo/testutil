@@ -51,6 +51,10 @@ func TestEqual(t *testing.T) {
 		{"", [2]float64{1, 2}, []float64{1, 2}, _tol, false},
 		{"", math.Jn, math.Jn, _tol, true},
 		{"", math.Jn, math.Yn, _tol, false},
+        {"", +inf, +inf, _tol, true},
+        {"", +inf, -inf, _tol, false},
+        {"", -inf, +inf, _tol, false},
+        {"", +inf, 1., _tol, false},
 	}
 	Test(t, 0.0, cases, Equal)
 }

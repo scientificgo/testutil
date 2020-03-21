@@ -139,9 +139,12 @@ func equalFloat(x, y, tol float64) bool {
     if x == y {
         return math.Signbit(x) == math.Signbit(y)
     }
+    if math.IsInf(y, 0) {
+        return x == y 
+    }
     diff := math.Abs(x - y)
     err := tol * math.Abs(y)
-    // If y=0, use err = tol.
+    // If y = 0, set err = tol.
     if y == 0 {
         err = tol
     }
