@@ -55,6 +55,14 @@ func TestEqual(t *testing.T) {
         {"", +inf, -inf, _tol, false},
         {"", -inf, +inf, _tol, false},
         {"", +inf, 1., _tol, false},
+        {"", _tol/100, 0., _tol, true},
 	}
-	Test(t, 0.0, cases, Equal)
+    
+    for _, c := range cases {
+        t.Run(c.Label, func(t *testing.T) {
+            if res:= Equal(c.In1, c.In2, c.In3.(float64)); res != c.Out {
+                t.Errorf("Error: wanted %v, got %v", c.Out, res)
+            }
+        })
+    }
 }
