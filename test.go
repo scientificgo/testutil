@@ -103,12 +103,12 @@ func handleSubtest(t *testing.T, i int, ri, oi reflect.Value, tol float64) {
 	}
 	if kind := oi.Kind(); kind == reflect.Slice {
 		t.Errorf("Error in results[%v][%v]. Got %v, want %v.",
-			i, j, oi.Index(j), ri.Index(j))
+			i, j, ri.Index(j), oi.Index(j))
 	} else if kind == reflect.Struct {
 		t.Errorf("Error in results[%v].%v. Got %v, want %v.",
-			i, oi.Type().Field(j).Name, oi.Field(j), ri.Field(j))
+			i, oi.Type().Field(j).Name, ri.Field(j), oi.Field(j))
 	} else {
-		t.Errorf("Error in results[%v]. Got %v, want %v.", i, oi, ri)
+		t.Errorf("Error in results[%v]. Got %v, want %v.", i, ri, oi)
 	}
 }
 }
