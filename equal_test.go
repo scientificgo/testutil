@@ -51,18 +51,18 @@ func TestEqual(t *testing.T) {
 		{"", [2]float64{1, 2}, []float64{1, 2}, _tol, false},
 		{"", math.Jn, math.Jn, _tol, true},
 		{"", math.Jn, math.Yn, _tol, false},
-        {"", +inf, +inf, _tol, true},
-        {"", +inf, -inf, _tol, false},
-        {"", -inf, +inf, _tol, false},
-        {"", +inf, 1., _tol, false},
-        {"", _tol/100, 0., _tol, true},
+		{"", +inf, +inf, _tol, true},
+		{"", +inf, -inf, _tol, false},
+		{"", -inf, +inf, _tol, false},
+		{"", +inf, 1., _tol, false},
+		{"", _tol / 100, 0., _tol, true},
 	}
-    
-    for _, c := range cases {
-        t.Run(c.Label, func(t *testing.T) {
-            if res:= Equal(c.In1, c.In2, c.In3.(float64)); res != c.Out {
-                t.Errorf("Error: wanted %v, got %v", c.Out, res)
-            }
-        })
-    }
+
+	for _, c := range cases {
+		t.Run(c.Label, func(t *testing.T) {
+			if res := Equal(c.In1, c.In2, c.In3.(float64)); res != c.Out {
+				t.Errorf("Error: wanted %v, got %v", c.Out, res)
+			}
+		})
+	}
 }

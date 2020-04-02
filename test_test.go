@@ -12,7 +12,7 @@ import (
 )
 
 const (
-    tol = 1e-10
+	tol = 1e-10
 )
 
 type if64 struct {
@@ -23,7 +23,7 @@ type if64 struct {
 func f1(x float64) float64        { return x * x }
 func f2(x complex128) complex128  { return x * x }
 func f3(s string) bool            { return len(s) < 6 && len(s) > 3 }
-func f4(x float64) if64       { return if64{int(x), x - float64(int(x))} }
+func f4(x float64) if64           { return if64{int(x), x - float64(int(x))} }
 func f5a(x float64) float64       { return 2 * x }
 func f5b(x float64) float64       { return x + x }
 func f6(n int, x float64) float64 { return math.Jn(n, x) }

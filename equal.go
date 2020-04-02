@@ -37,13 +37,13 @@ func Equal(x, y interface{}, tol ...float64) bool {
 }
 
 func tolerance(tol float64) float64 {
-    if math.IsInf(tol, 0) || math.IsNaN(tol) {
-        tol = 1.e-10
-    }
-    if tol < 0 {
-        tol = -tol
-    }
-    return tol
+	if math.IsInf(tol, 0) || math.IsNaN(tol) {
+		tol = 1.e-10
+	}
+	if tol < 0 {
+		tol = -tol
+	}
+	return tol
 }
 
 func equal(x, y reflect.Value, tol float64) (i int, ok bool) {
@@ -67,25 +67,25 @@ func equal(x, y reflect.Value, tol float64) (i int, ok bool) {
 		}
 	case reflect.Map:
 		xkeys := x.MapKeys()
-        ykeys := y.MapKeys()
+		ykeys := y.MapKeys()
 		n := len(ykeys)
 		if ok = len(xkeys) == n; !ok {
 			goto end
 		}
-		for i =0; i < n; i++ {
-            // check that each key in xkeys is in ykeys. Need to iterate over all xkeys
-            // for each ykey since ordering of keys from maps is not deterministic, so
-            // the keys could come in different orders even if xkeys and ykeys contain
-            // the same values.
-            ykey := ykeys[i]
-            for _, xkey := range xkeys {
-                if _, ok = equal(xkey, ykey, tol); ok {
-                    break
-                }
-            }
-            if !ok {
-                goto end
-            }
+		for i = 0; i < n; i++ {
+			// check that each key in xkeys is in ykeys. Need to iterate over all xkeys
+			// for each ykey since ordering of keys from maps is not deterministic, so
+			// the keys could come in different orders even if xkeys and ykeys contain
+			// the same values.
+			ykey := ykeys[i]
+			for _, xkey := range xkeys {
+				if _, ok = equal(xkey, ykey, tol); ok {
+					break
+				}
+			}
+			if !ok {
+				goto end
+			}
 			if _, ok = equal(x.MapIndex(ykey), y.MapIndex(ykey), tol); !ok {
 				goto end
 			}
@@ -134,21 +134,21 @@ end:
 // equalFloat returns true if x and y are equal within the specified tolerance
 func equalFloat(x, y, tol float64) bool {
 	if equalNaN(x, y) {
-	    return true
-    }
-    if x == y {
-        return math.Signbit(x) == math.Signbit(y)
-    }
-    if math.IsInf(y, 0) {
-        return x == y 
-    }
-    diff := math.Abs(x - y)
-    err := tol * math.Abs(y)
-    // If y = 0, set err = tol.
-    if y == 0 {
-        err = tol
-    }
-    return diff <= err
+		return true
+	}
+	if x == y {
+		return math.Signbit(x) == math.Signbit(y)
+	}
+	if math.IsInf(y, 0) {
+		return x == y
+	}
+	diff := math.Abs(x - y)
+	err := tol * math.Abs(y)
+	// If y = 0, set err = tol.
+	if y == 0 {
+		err = tol
+	}
+	return diff <= err
 }
 
 // equalComplex returns true if x and y are equal to the given number of significant tol.

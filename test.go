@@ -31,7 +31,7 @@ import (
 //  }{
 //    {"Case1", 1., 1.},
 //    {"Case2", 4., 2.},
-//    {"Case3", -1., math.NaN()}, 
+//    {"Case3", -1., math.NaN()},
 //  }
 //
 //  var tol = 1.e-10
