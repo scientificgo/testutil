@@ -94,12 +94,9 @@ func subtest(t *testing.T, cv casev, f1v, f2v funcv, nIn, nOut int, tol float64)
 	})
 }
 
-// handleSubtest checks whether io and ri are equal and reports if they are not.
-func handleSubtest(t *testing.T, i int, oi, ri reflect.Value, tol float64) {
-	j, ok := equal(ri, oi, tol)
-	if ok {
-		return
-	}
+// handleSubtest checks whether ri is equal to oi
+func handleSubtest(t *testing.T, i int, ri, oi reflect.Value, tol float64) {
+	if j, ok := equal(ri, oi, tol); !ok {
 
 	if j < 0 {
 		t.Errorf("Error: length mismatch between %v-th result and expected output.", i)
@@ -113,4 +110,5 @@ func handleSubtest(t *testing.T, i int, oi, ri reflect.Value, tol float64) {
 	} else {
 		t.Errorf("Error in results[%v]. Got %v, want %v.", i, oi, ri)
 	}
+}
 }
