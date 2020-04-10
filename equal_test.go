@@ -30,6 +30,14 @@ func TestEqual(t *testing.T) {
 		Float  float64
 		Extra  string
 	}
+
+	fn := func(s string, f64s [][]float64) string {
+		return s
+	}
+	fg := func(s string, f64s [][]float64) string {
+		return s
+	}
+
 	_tol := 1e-4
 	cases := []struct {
 		Label              string
@@ -49,18 +57,19 @@ func TestEqual(t *testing.T) {
 		{"", map[int]int{0: 1, 1: 10, 3: 100}, map[int]int{0: 1, 1: 10, 2: 100}, _tol, false},
 		{"", map[int]int{0: 1, 1: 10, 2: 100, 3: 1000}, map[int]int{0: 1, 1: 10, 2: 100}, _tol, false},
 		{"", [2]float64{1, 2}, []float64{1, 2}, _tol, false},
-		{"", math.Jn, math.Jn, _tol, true},
-		{"", math.Jn, math.Yn, _tol, false},
+		{"", math.Jn, math.Jn, uintptr(0), true},
+		{"", math.Jn, math.Yn, complex128(0), false},
+		{"", fn, fg, _tol, true},
 		{"", +inf, +inf, _tol, true},
 		{"", +inf, -inf, _tol, false},
 		{"", -inf, +inf, _tol, false},
-		{"", +inf, 1., _tol, false},
-		{"", _tol / 100, 0., _tol, true},
+		{"", +inf, 1., math.Inf(-1), false},
+		{"", _tol / 100, float64(0), _tol, true},
 	}
 
 	for _, c := range cases {
 		t.Run(c.Label, func(t *testing.T) {
-			if res := Equal(c.In1, c.In2, c.In3.(float64)); res != c.Out {
+			if res := Equal(c.In1, c.In2, c.In3); res != c.Out {
 				t.Errorf("Error: wanted %v, got %v", c.Out, res)
 			}
 		})
