@@ -29,7 +29,7 @@ import (
 // if they are equal according to reflect.DeepEqual.
 //
 // The tolerance parameter is optional and has a default value of zero,
-// which corresponds checking for absolute equality.
+// which corresponds to checking for absolute equality.
 func Equal(x, y interface{}, tolerance ...interface{}) bool {
 	tol := validateTolerance(tolerance...)
 	_, ok := equal(reflect.ValueOf(x), reflect.ValueOf(y), tol)
