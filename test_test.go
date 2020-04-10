@@ -126,11 +126,8 @@ func TestFunc7(t *testing.T) {
 }
 
 func TestPanic(t *testing.T) {
-	defer func() {
-		if r := recover(); r == nil {
-			t.Errorf("Did not panic as expected.")
-		}
-	}()
+	defer handlePanic(t, "Did not panic as expected.")
+
 	cases := []struct {
 		Label         string
 		In1, In2, Out interface{}
@@ -141,4 +138,10 @@ func TestPanic(t *testing.T) {
 	}
 
 	Test(t, tol, cases, f1)
+}
+
+func handlePanic(t *testing.T, msg string) {
+	if r := recover(); r == nil {
+		t.Errorf(msg)
+	}
 }

@@ -45,7 +45,8 @@ import (
 //  func TestSquareRootvsSqrt(t *testing.T) {
 //    testutil.Test(t, tol, cases, SquareRoot, math.Sqrt)
 //  }
-func Test(t *testing.T, tol float64, cs Cases, fs ...Func) {
+func Test(t *testing.T, tolerance interface{}, cs Cases, fs ...Func) {
+	tol := tolerance.(float64)
 	cvs, nc, nfc := parseCases(cs)
 	f1v, f2v := parseFuncs(fs...)
 
@@ -98,17 +99,17 @@ func subtest(t *testing.T, cv casev, f1v, f2v funcv, nIn, nOut int, tol float64)
 func handleSubtest(t *testing.T, i int, ri, oi reflect.Value, tol float64) {
 	if j, ok := equal(ri, oi, tol); !ok {
 
-	if j < 0 {
-		t.Errorf("Error: length mismatch between %v-th result and expected output.", i)
+		if j < 0 {
+			t.Errorf("Error: length mismatch between %v-th result and expected output.", i)
+		}
+		if kind := oi.Kind(); kind == reflect.Slice {
+			t.Errorf("Error in results[%v][%v]. Got %v, want %v.",
+				i, j, ri.Index(j), oi.Index(j))
+		} else if kind == reflect.Struct {
+			t.Errorf("Error in results[%v].%v. Got %v, want %v.",
+				i, oi.Type().Field(j).Name, ri.Field(j), oi.Field(j))
+		} else {
+			t.Errorf("Error in results[%v]. Got %v, want %v.", i, ri, oi)
+		}
 	}
-	if kind := oi.Kind(); kind == reflect.Slice {
-		t.Errorf("Error in results[%v][%v]. Got %v, want %v.",
-			i, j, ri.Index(j), oi.Index(j))
-	} else if kind == reflect.Struct {
-		t.Errorf("Error in results[%v].%v. Got %v, want %v.",
-			i, oi.Type().Field(j).Name, ri.Field(j), oi.Field(j))
-	} else {
-		t.Errorf("Error in results[%v]. Got %v, want %v.", i, ri, oi)
-	}
-}
 }
