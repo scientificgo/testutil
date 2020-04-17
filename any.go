@@ -8,10 +8,10 @@ import "reflect"
 
 // Any returns true if the function f evaluates to true for any argument in xs.
 func Any(f Func, xs ...interface{}) bool {
-	// Get function and validate it returns bool.
+	// get function and validate it returns bool
+	// and that the xs are the right size and type
 	fv := reflect.ValueOf(f)
 	nArg := len(xs)
-	//validateAny(fv, n)
 
 	k := fv.Kind()
 	panicIf(k != reflect.Func, "Wrong input type. Got %v, want %v.", k, "func")
@@ -28,9 +28,9 @@ func Any(f Func, xs ...interface{}) bool {
 	args := make([]reflect.Value, nArg)
 	l := reflect.ValueOf(xs[0]).Len()
 
-	// Iterate over the input length.
+	// iterate over the input length
 	for i := 0; i < l; i++ {
-		// Iterate across all inputs and construct the slice for calling f.
+		// iterate across all inputs and construct the slice for calling f
 		for j, x := range xs {
 			xv := reflect.ValueOf(x)
 			args[j] = underlying(xv.Index(i))
@@ -42,11 +42,12 @@ func Any(f Func, xs ...interface{}) bool {
 	return false
 }
 
-// All returns true if the function f evaluates to true for all arguments in x.
-func All(f Func, x ...interface{}) bool {
-	g := func(y interface{}) bool {
+// All returns true if the function f evaluates to true for all arguments in xs.
+func All(f Func, xs ...interface{}) bool {
+	// use all(f) = !any(!f)
+	notf := func(y interface{}) bool {
 		ys := []reflect.Value{reflect.ValueOf(y)}
-		return !reflect.ValueOf(f).Call(ys)[0].Interface().(bool)
+		return !(reflect.ValueOf(f).Call(ys)[0].Interface().(bool))
 	}
-	return !Any(g, x...)
+	return !Any(notf, xs...)
 }
