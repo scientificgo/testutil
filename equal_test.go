@@ -30,6 +30,11 @@ func TestEqual(t *testing.T) {
 		Float  float64
 		Extra  string
 	}
+	type mystruct3 struct {
+		Int           int
+		String        string
+		IncorrectName float64
+	}
 
 	fn := func(s string, f64s [][]float64) string {
 		return s
@@ -38,38 +43,41 @@ func TestEqual(t *testing.T) {
 		return s
 	}
 
-	_tol := 1e-4
+	tol := 1e-4
 	cases := []struct {
 		Label              string
 		In1, In2, In3, Out interface{}
 	}{
-		{"", []float64{1, 2}, []float64{1, 2, 3}, _tol, false},
-		{"", []float64{0., nan}, []float64{0., nan}, _tol, true},
-		{"", []float64{0.9, 1.}, []float64{0.8, 1.}, _tol, false},
-		{"", []float64{0., 0.00000001}, []float64{0., 0.}, _tol, true},
-		{"", []complex128{0., 0.999999i}, []complex128{0., 1i}, _tol, true},
-		{"", []complex128{0.99, 1. - 1i}, []complex128{1., 1. - 1i}, _tol, false},
-		{"", mystruct{1, "ScientificGo", math.E}, mystruct{1, "ScientificGo", math.E}, _tol, true},
-		{"", mystruct{1, "ScientificGo", math.E}, mystruct{1, "ScientificGopher", math.E}, _tol, false},
-		{"", mystruct{1, "Hey", math.E}, mystruct2{1, "Hey", math.E, "extra"}, _tol, false},
-		{"", map[int]int{0: 1, 1: 10, 2: 100}, map[int]int{0: 1, 1: 10, 2: 100}, _tol, true},
-		{"", map[int]int{0: 1, 1: 11, 2: 100}, map[int]int{0: 1, 1: 10, 2: 100}, _tol, false},
-		{"", map[int]int{0: 1, 1: 10, 3: 100}, map[int]int{0: 1, 1: 10, 2: 100}, _tol, false},
-		{"", map[int]int{0: 1, 1: 10, 2: 100, 3: 1000}, map[int]int{0: 1, 1: 10, 2: 100}, _tol, false},
-		{"", [2]float64{1, 2}, []float64{1, 2}, _tol, false},
-		{"", math.Jn, math.Jn, uintptr(0), true},
-		{"", math.Jn, math.Yn, complex128(0), false},
-		{"", fn, fg, _tol, true},
-		{"", +inf, +inf, _tol, true},
-		{"", +inf, -inf, _tol, false},
-		{"", -inf, +inf, _tol, false},
-		{"", +inf, 1., math.Inf(-1), false},
-		{"", _tol / 100, float64(0), _tol, true},
+		{"", []float64{1, 2}, []float64{1, 2, 3}, 0, false},
+		{"", []float64{0., nan}, []float64{0., nan}, 0, true},
+		{"", []float64{0.9, 1.}, []float64{0.8, 1.}, 0, false},
+		{"", []float64{0., 0.00000001}, []float64{0., 0.}, tol, true},
+		{"", []complex128{0., 0.999999i}, []complex128{0., 1i}, tol, true},
+		{"", []complex128{1. - 1i, 3.3}, []complex128{1. - 1i, 3}, tol, false},
+		{"", mystruct{1, "ScientificGo", math.E}, mystruct{1, "ScientificGo", math.E}, nil, true},
+		{"", mystruct{1, "ScientificGo", math.E}, mystruct{1, "ScientificGopher", math.E}, nil, false},
+		{"", mystruct{1, "Hey", math.E}, mystruct2{1, "Hey", math.E, "extra"}, nil, false},
+		{"", mystruct{1, "Hey", math.E}, mystruct3{1, "Hey", math.E}, nil, false},
+		{"", map[int]int{0: 1, 1: 10, 2: 100}, map[int]int{0: 1, 1: 10, 2: 100}, tol, true},
+		{"", map[int]int{0: 1, 1: 11, 2: 100}, map[int]int{0: 1, 1: 10, 2: 100}, tol, false},
+		{"", map[int]int{0: 1, 1: 10, 3: 100}, map[int]int{0: 1, 1: 10, 2: 100}, nil, false},
+		{"", map[int]int{0: 1, 1: 10, 2: 100, 3: 1000}, map[int]int{0: 1, 1: 10, 2: 100}, nil, false},
+		{"", [2]float64{1, 2}, []float64{1, 2}, 0, false},
+		{"", math.Jn, math.Jn, 0, true},
+		{"", math.Jn, math.Jn, 1e-9, true},
+		{"", math.Jn, math.Yn, 0, false},
+		{"", math.Jn, math.Yn, 1e-9, false},
+		{"", fn, fg, nil, true},
+		{"", +inf, +inf, nil, true},
+		{"", +inf, -inf, nan, false},
+		{"", -inf, +inf, complex64(0), false},
+		{"", +inf, 1., math.Inf(-1), true},
+		{"", tol / 100, float64(0), tol, true},
 	}
 
 	for _, c := range cases {
 		t.Run(c.Label, func(t *testing.T) {
-			if res := Equal(c.In1, c.In2, c.In3); res != c.Out {
+			if res := Equal(c.In1, c.In2, c.In3); res.Ok != c.Out {
 				t.Errorf("Error: wanted %v, got %v", c.Out, res)
 			}
 		})

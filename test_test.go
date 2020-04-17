@@ -27,10 +27,12 @@ func f4(x float64) if64           { return if64{int(x), x - float64(int(x))} }
 func f5a(x float64) float64       { return 2 * x }
 func f5b(x float64) float64       { return x + x }
 func f6(n int, x float64) float64 { return math.Jn(n, x) }
-func f7(n int, x float64) []float64 {
-	res := make([]float64, n)
+func f7(n int, x float64) []complex128 {
+	res := make([]complex128, n)
 	for i := 0; i < n; i++ {
-		res[i] = math.Jn(i+1, x)
+		re := math.Jn(i+1, x)
+		im := 1.
+		res[i] = complex(re, im)
 	}
 	return res
 }
@@ -137,7 +139,7 @@ func TestPanic(t *testing.T) {
 		{"3", 3, 0.3, f1(0.3)},
 	}
 
-	Test(t, tol, cases, f1)
+	Test(t, int8(1), cases, f1)
 }
 
 func handlePanic(t *testing.T, msg string) {
