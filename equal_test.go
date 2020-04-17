@@ -54,20 +54,25 @@ func TestEqual(t *testing.T) {
 		{"", []float64{0., 0.00000001}, []float64{0., 0.}, tol, true},
 		{"", []complex128{0., 0.999999i}, []complex128{0., 1i}, tol, true},
 		{"", []complex128{1. - 1i, 3.3}, []complex128{1. - 1i, 3}, tol, false},
+
 		{"", mystruct{1, "ScientificGo", math.E}, mystruct{1, "ScientificGo", math.E}, nil, true},
 		{"", mystruct{1, "ScientificGo", math.E}, mystruct{1, "ScientificGopher", math.E}, nil, false},
 		{"", mystruct{1, "Hey", math.E}, mystruct2{1, "Hey", math.E, "extra"}, nil, false},
 		{"", mystruct{1, "Hey", math.E}, mystruct3{1, "Hey", math.E}, nil, false},
+
 		{"", map[int]int{0: 1, 1: 10, 2: 100}, map[int]int{0: 1, 1: 10, 2: 100}, tol, true},
 		{"", map[int]int{0: 1, 1: 11, 2: 100}, map[int]int{0: 1, 1: 10, 2: 100}, tol, false},
 		{"", map[int]int{0: 1, 1: 10, 3: 100}, map[int]int{0: 1, 1: 10, 2: 100}, nil, false},
 		{"", map[int]int{0: 1, 1: 10, 2: 100, 3: 1000}, map[int]int{0: 1, 1: 10, 2: 100}, nil, false},
+
 		{"", [2]float64{1, 2}, []float64{1, 2}, 0, false},
+
 		{"", math.Jn, math.Jn, 0, true},
 		{"", math.Jn, math.Jn, 1e-9, true},
 		{"", math.Jn, math.Yn, 0, false},
 		{"", math.Jn, math.Yn, 1e-9, false},
 		{"", fn, fg, nil, true},
+
 		{"", +inf, +inf, nil, true},
 		{"", +inf, -inf, nan, false},
 		{"", -inf, +inf, complex64(0), false},

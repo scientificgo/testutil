@@ -5,6 +5,7 @@
 package testutil
 
 import (
+	"fmt"
 	"math"
 	"math/cmplx"
 	"math/rand"
@@ -31,19 +32,22 @@ type EqualResult struct {
 	AbsoluteError reflect.Value
 
 	// Position is the the first "location" that x does not equal y
-	// if x and y are structured data.
+	// if x and y are structured data types.
 	//
-	// For slices and arrays it is the index of first element from x
-	// that does not equal y.
+	// For slices and arrays it is the index of first element from x that does not equal y.
+	// For structs it is the index of the first field for which x does not equal y.
+	// For maps it is the index of the first key for which x does not equal y.
 	//
-	// For structs it is the index of the first field in x that
-	// does not equal y and/or has a different name than in y.
-	//
-	// For maps it is the index of either the first key from y that is not
-	// in x or the first key for which x does not equal y.
-	//
-	// A value of -1 indicates a length mismatch.
+	// If MissingValue is true, Position gives the index in y of the missing field or key.
 	Position int
+
+	// LengthMismatch is true if the number of elements, fields or keys in x
+	// differs from y for structured data types.
+	LengthMismatch bool
+
+	// MissingValue is true if x and y are maps or structs and x is missing one of the keys
+	// or fields in y.
+	MissingValue bool
 }
 
 // Equal reports whether x (actual) is equal to y (expected).
@@ -62,8 +66,7 @@ type EqualResult struct {
 //
 func Equal(x, y, tolerance interface{}) EqualResult {
 	tol := validateTolerance(tolerance)
-	res := equal(reflect.ValueOf(x), reflect.ValueOf(y), tol)
-	return res
+	return equal(reflect.ValueOf(x), reflect.ValueOf(y), tol)
 }
 
 var floatType = reflect.ValueOf(float64(1)).Type()
@@ -80,10 +83,22 @@ var complexType = reflect.ValueOf(complex128(1)).Type()
 //
 // for floats and for both the real and imaginary parts for complex types.
 func equal(xv, yv reflect.Value, tol float64) (res EqualResult) {
+	// this occurs when the expected output for y is nil, e.g. for errors,
+	// which does not have a concrete type. To avoid panicking, we cast y as
+	// a zero of type x. For the example case of errors, this would
+	// set y as the zero value for the error type.
+	switch {
+	case !yv.IsValid() && xv.IsValid():
+		yv = reflect.Zero(xv.Type())
+	case !xv.IsValid():
+		res.Ok = false
+		return
+	}
+
 	kind := xv.Type().Kind()
 
-	res.RelativeError = reflect.ValueOf(nil)
-	res.AbsoluteError = reflect.ValueOf(nil)
+	res.RelativeError = reflect.ValueOf(0.)
+	res.AbsoluteError = reflect.ValueOf(0.)
 
 	if res.Ok = (kind == yv.Type().Kind()); !res.Ok {
 		return
@@ -140,7 +155,7 @@ func equalSlice(xv, yv reflect.Value, tol float64) (res EqualResult) {
 	// check the slices have equal lengths
 	n := xv.Len()
 	if res.Ok = (n == yv.Len()); !res.Ok {
-		res.Position = -1
+		res.LengthMismatch = true
 		return
 	}
 	// check that the items at each position are equal
@@ -163,7 +178,7 @@ func equalMap(xv, yv reflect.Value, tol float64) (res EqualResult) {
 	// check that x and y have the same number of keys
 	n := len(ykeys)
 	if res.Ok = len(xkeys) == n; !res.Ok {
-		res.Position = -1
+		res.LengthMismatch = true
 		return
 	}
 
@@ -179,6 +194,7 @@ func equalMap(xv, yv reflect.Value, tol float64) (res EqualResult) {
 		// if ykey was not found, return false
 		if !res.Ok {
 			res.Position = i
+			res.MissingValue = true
 			return
 		}
 		// if the items for this key are not equal, return false
@@ -197,13 +213,13 @@ func equalStruct(xv, yv reflect.Value, tol float64) (res EqualResult) {
 	// check that x and y have the same number of fields
 	n := xv.Type().NumField()
 	if res.Ok = (n == yv.Type().NumField()); !res.Ok {
-		res.Position = -1
+		res.LengthMismatch = true
 		return
 	}
 	// check that the fields at each position are equal
 	for i := 0; i < n; i++ {
-		if xv.Type().Field(i).Name != yv.Type().Field(i).Name {
-			res.Ok = false
+		if res.Ok = xv.Type().Field(i).Name == yv.Type().Field(i).Name; !res.Ok {
+			res.MissingValue = true
 			res.Position = i
 			return
 		}
@@ -231,10 +247,13 @@ func equalFloat(x, y, tol float64) (res EqualResult) {
 
 	if x == y || math.IsInf(y, 0) {
 		res.Ok = math.Signbit(x) == math.Signbit(y)
+		if !res.Ok && math.IsInf(y, 0) {
+			res.AbsoluteError = reflect.ValueOf(y)
+			res.RelativeError = reflect.ValueOf(y)
+		}
 		if res.Ok {
+			res.AbsoluteError = reflect.ValueOf(0.)
 			res.RelativeError = reflect.ValueOf(0.)
-		} else {
-			res.RelativeError = reflect.ValueOf(math.Min(-2, math.Abs(y)))
 		}
 		return
 	}
@@ -282,14 +301,17 @@ func equalFunc(xv, yv reflect.Value, tol float64) (res EqualResult) {
 	// if checking for exact equality just use the testing/quick package
 	if tol == 0 {
 		err := quick.CheckEqual(xv.Interface(), yv.Interface(), &quick.Config{Rand: r})
-		res.Ok = err == nil
+		res.Ok = (err == nil)
 		return
 	}
 
 	// otherwise generate n random sets of arguments and check the functions
 	// agree for each set, returning an error if they do not agree to within the tolerance
 	for n := 0; n < 1000; n++ {
-		args := mockArgs(xv, r)
+		args, err := mockArgs(xv, r)
+		if res.Ok = (err == nil); !res.Ok {
+			return
+		}
 		xcall := xv.Call(args)
 		ycall := yv.Call(args)
 		for i := 0; i < len(xcall); i++ {
@@ -303,15 +325,18 @@ func equalFunc(xv, yv reflect.Value, tol float64) (res EqualResult) {
 
 // mockArgs generates mock arguments for calling an arbitrary function fv
 // based on its signature.
-func mockArgs(fv funcv, r *rand.Rand) []reflect.Value {
+func mockArgs(fv reflect.Value, r *rand.Rand) (args []reflect.Value, err error) {
 	nIn := fv.Type().NumIn()
-	args := make([]reflect.Value, nIn)
+	args = make([]reflect.Value, nIn)
 	for i := 0; i < nIn; i++ {
 		v, ok := quick.Value(fv.Type().In(i), r)
-		panicIf(!ok, "Error. Could not generate mock arguments.")
+		if !ok {
+			err = fmt.Errorf("could not generate mock arguments")
+			return
+		}
 		args[i] = v
 	}
-	return args
+	return
 }
 
 // validateTolerance ensures the tolerance passed is sensibly valued.
