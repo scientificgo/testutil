@@ -11,139 +11,190 @@ import (
 	. "scientificgo.org/testutil"
 )
 
-const (
-	tol = 1e-10
-)
-
-type if64 struct {
-	Integer   int
-	Remainder float64
-}
-
-func f1(x float64) float64        { return x * x }
-func f2(x complex128) complex128  { return x * x }
-func f3(s string) bool            { return len(s) < 6 && len(s) > 3 }
-func f4(x float64) if64           { return if64{int(x), x - float64(int(x))} }
-func f5a(x float64) float64       { return 2 * x }
-func f5b(x float64) float64       { return x + x }
-func f6(n int, x float64) float64 { return math.Jn(n, x) }
-func f7(n int, x float64) []complex128 {
-	res := make([]complex128, n)
-	for i := 0; i < n; i++ {
-		re := math.Jn(i+1, x)
-		im := 1.
-		res[i] = complex(re, im)
-	}
-	return res
-}
-
-func TestFunc1(t *testing.T) {
+func TestTest_Slices(t *testing.T) {
+	tol := 0.001
 	cases := []struct {
-		Label   string
-		In, Out interface{}
+		Label          string
+		In, Out1, Out2 interface{}
 	}{
-		{"1", 0.1, f1(0.1)},
-		{"2", 0.2, f1(0.2)},
-		{"3", 0.3, f1(0.3)},
+		{"", []float64{1, 2}, []float64{1, 2}, []string{"a", "b"}},
+		{"", []float64{1, 2.00001}, []float64{1, 2}, []string{"a", "b"}},
 	}
-	Test(t, tol, cases, f1)
+	f := func(in []float64) ([]float64, []string) { return in, []string{"a", "b"} }
+	Test(t, tol, cases, f)
 }
 
-func TestFunc2(t *testing.T) {
+func TestTest_Structs(t *testing.T) {
+	tol := 1
 	cases := []struct {
-		Label   string
-		In, Out interface{}
+		Label    string
+		In, Out1 interface{}
 	}{
-		{"1", 1i, f2(1i)},
-		{"2", 0.5 + 0.5i, f2(0.5 + 0.5i)},
-		{"3", 1 - 1i, f2(1 - 1i)},
+		{"", struct{ A, B int }{1, 2}, struct{ A, B int }{1, 2}},
+		{"", struct{ A, B int }{1, 3}, struct{ A, B int }{1, 2}},
+
+		{"", struct{ A, B bool }{true, true}, struct{ A, B bool }{true, true}},
 	}
-	Test(t, tol, cases, f2)
+	f := func(in struct{ A, B int }) struct{ A, B int } { return in }
+	g := func(in struct{ A, B bool }) struct{ A, B bool } { return in }
+
+	Test(t, tol, cases[:2], f)
+	Test(t, tol, cases[2:], g)
 }
 
-func TestFunc3(t *testing.T) {
+func TestTest_Maps(t *testing.T) {
+	tol := 1
 	cases := []struct {
-		Label   string
-		In, Out interface{}
+		Label    string
+		In, Out1 interface{}
 	}{
-		{"1", "dog", false},
-		{"2", "caterpillar", false},
-		{"3", "frog", true},
-	}
+		{"", map[string]int{"a": 1, "b": 3}, map[string]int{"a": 1, "b": 2}},
+		{"", map[string]int{"a": 1, "b": 3}, map[string]int{"a": 1, "b": 2}},
 
-	Test(t, tol, cases, f3)
+		{"", map[string]string{"a": "1", "b": "2"}, map[string]string{"a": "1", "b": "2"}},
+
+		{"",
+			map[int](map[string]string){1: map[string]string{"a": "1", "b": "2"}},
+			map[int](map[string]string){1: map[string]string{"a": "1", "b": "2"}},
+		},
+	}
+	f := func(in map[string]int) map[string]int { return in }
+	g := func(in map[string]string) map[string]string { return in }
+	h := func(in map[int](map[string]string)) map[int](map[string]string) { return in }
+
+	Test(t, tol, cases[:2], f)
+	Test(t, nil, cases[2:3], g)
+	Test(t, nil, cases[3:], h)
 }
 
-func TestFunc4(t *testing.T) {
-	cases := []struct {
-		Label   string
-		In, Out interface{}
-	}{
-		{"1", 1.0, if64{1, 0}},
-		{"2", 1.1, if64{1, 0.1}},
-		{"3", math.Pi, if64{3, math.Pi - 3}},
-	}
+func TestTest_Funcs(t *testing.T) {
+	tol := 0.1
 
-	Test(t, tol, cases, f4)
-}
-
-func TestFunc5(t *testing.T) {
-	cases := []struct {
-		Label string
-		In    interface{}
-	}{
-		{"1", 1.0},
-		{"2", 1.1},
-		{"3", math.Pi},
-		{"4", nan},
-	}
-
-	Test(t, tol, cases, f5a, f5b)
-}
-
-func TestFunc6(t *testing.T) {
 	cases := []struct {
 		Label         string
-		In1, In2, Out interface{}
+		In1, In2, Out float64
 	}{
-		{"1", 1, 0.1, f6(1, 0.1)},
-		{"1", 2, 0.2, f6(2, 0.2)},
-		{"3", 3, 0.3, f6(3, 0.3)},
+		{"", 0, 0, 0},
+		{"", 1, 1, math.Sqrt2},
 	}
 
-	Test(t, tol, cases, f6)
-}
-
-func TestFunc7(t *testing.T) {
-	cases := []struct {
-		Label         string
-		In1, In2, Out interface{}
-	}{
-		{"1", 1, 0.1, f7(1, 0.1)},
-		{"1", 2, 0.2, f7(2, 0.2)},
-		{"3", 3, 0.3, f7(3, 0.3)},
+	hypot := func(x, y float64) float64 {
+		return math.Sqrt(x*x + y*y)
 	}
 
-	Test(t, tol, cases, f7)
+	Test(t, tol, cases, math.Hypot)
+	Test(t, tol, cases, math.Hypot, hypot)
 }
 
-func TestPanic(t *testing.T) {
-	defer handlePanic(t, "Did not panic as expected.")
+func TestTest_Default(t *testing.T) {
+	chani64 := make(chan int64)
+	chanf64 := make(chan float64)
 
 	cases := []struct {
 		Label         string
 		In1, In2, Out interface{}
 	}{
-		{"1", 1, 0.1, f1(0.1)},
-		{"1", 2, 0.2, f1(0.2)},
-		{"3", 3, 0.3, f1(0.3)},
+		{"", chani64, chani64, true},
+		{"", chanf64, chani64, false},
+		{"", 1 == 0, 1 == 1, false},
+		{"", "Ben", "Jerry", false},
+		{"", complex128(1.0), complex128(2.0), complex128(300.0)},
 	}
 
-	Test(t, int8(1), cases, f1)
+	f := func(x, y interface{}) bool {
+		res := Equal(x, y, nil)
+		return res.Ok
+	}
+	g := func(x, y complex128) complex128 { return x + y }
+
+	Test(t, nil, cases[:4], f)
+	Test(t, -inf, cases[4:], g)
 }
 
-func handlePanic(t *testing.T, msg string) {
-	if r := recover(); r == nil {
-		t.Errorf(msg)
-	}
-}
+// The following tests fail by design and are used to
+// check the error messages produced are as expected.
+
+// func TestTest_WrongLengthError(t *testing.T) {
+// 	cases := []struct {
+// 		Label          string
+// 		In, Out1, Out2 []float64
+// 	}{{"", []float64{1, 2}, []float64{1, 2, 3}, []float64{1, 2}}, // length mismatch in out[0]
+// 		{"", []float64{1, 2}, []float64{1, 2}, []float64{1, 2, 3}}, // length mismatch in out[1]
+// 		{"", []float64{1, 2, 3}, []float64{1, 2}, []float64{1, 2}}, // length mismatch in out[0] and out[1]
+// 	}
+// 	f := func(in []float64) ([]float64, []float64) { return in, in }
+// 	Test(t, nil, cases, f)
+// }
+
+// func TestTest_SliceErrors(t *testing.T) {
+// 	cases := []struct {
+// 		Label          string
+// 		In, Out1, Out2 interface{}
+// 	}{
+// 		{"", []float64{1, 2}, []float64{1, 2}, []string{"a", "c"}},   // value of out[1]
+// 		{"", []float64{1, 2.1}, []float64{1, 2}, []string{"a", "b"}}, // value of out[0] (numerical)
+
+// 	}
+// 	f := func(in []float64) ([]float64, []string) { return in, []string{"a", "b"} }
+// 	Test(t, nil, cases, f)
+// }
+
+// func TestTest_StructErrors(t *testing.T) {
+// 	cases := []struct {
+// 		Label    string
+// 		In, Out1 interface{}
+// 	}{
+// 		{"", struct{ A, B int }{1, 2}, struct{ A, C int }{1, 2}}, // missing field C
+// 		{"", struct{ A, B int }{1, 3}, struct{ A, B int }{1, 2}}, // value of B (numerical)
+
+// 		{"", struct{ A, B bool }{true, true}, struct{ A, B bool }{true, false}}, // value of B
+// 	}
+// 	f := func(in struct{ A, B int }) struct{ A, B int } { return in }
+// 	g := func(in struct{ A, B bool }) struct{ A, B bool } { return in }
+
+// 	Test(t, nil, cases[:2], f)
+// 	Test(t, nil, cases[2:], g)
+// }
+
+// func TestTest_MapErrors(t *testing.T) {
+// 	cases := []struct {
+// 		Label    string
+// 		In, Out1 interface{}
+// 	}{
+// 		{"", map[string]int{"a": 1, "c": 2}, map[string]int{"a": 1, "b": 2}}, // missing key "b"
+// 		{"", map[string]int{"a": 1, "b": 3}, map[string]int{"a": 1, "b": 2}}, // value of "b" (numerical)
+
+// 		{"", map[string]string{"a": "1", "b": "two"}, map[string]string{"1": "1", "2": "2"}},
+
+// 		{"",
+// 			map[int](map[string]string){1: map[string]string{"a": "1", "b": "two"}},
+// 			map[int](map[string]string){1: map[string]string{"a": "1", "b": "2"}},
+// 		}, // value of "b" for nested map
+// 	}
+// 	f := func(in map[string]int) map[string]int { return in }
+// 	g := func(in map[string]string) map[string]string { return in }
+// 	h := func(in map[int](map[string]string)) map[int](map[string]string) { return in }
+
+// 	Test(t, nil, cases[:2], f)
+// 	Test(t, nil, cases[2:3], g)
+// 	Test(t, nil, cases[3:], h)
+// }
+
+// func TestTest_DefaultErrors(t *testing.T) {
+// 	cases := []struct {
+// 		Label         string
+// 		In1, In2, Out interface{}
+// 	}{
+// 		{"", testing.T{}, testing.B{}, true}, // should be false
+// 		{"", complex128(1.0), complex128(2.0), complex128(2.5)},
+// 	}
+
+// 	f := func(x, y interface{}) bool {
+// 		res := Equal(x, y, nil)
+// 		return res.Ok
+// 	}
+// 	g := func(x, y complex128) complex128 { return x + y }
+
+// 	Test(t, nil, cases[:1], f)
+// 	Test(t, nil, cases[1:], g)
+// }

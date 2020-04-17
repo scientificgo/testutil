@@ -5,6 +5,7 @@
 package testutil
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 )
@@ -19,63 +20,39 @@ import (
 // If 2 functions are provided, then their respective outputs are
 // compared, using the inputs provided in each case.
 //
-// For example, to test a function called SquareRoot on some cases, and
-// against the standard library function math.Sqrt, where SquareRoot,
-// cases and the tolerance tol are defined as
-//
-//  func SquareRoot(x float64) float64 { ... }
-//
-//  var cases = []struct{
-//    Label     string
-//    In1, Out1 interface{}
-//  }{
-//    {"Case1", 1., 1.},
-//    {"Case2", 4., 2.},
-//    {"Case3", -1., math.NaN()},
-//  }
-//
-//  var tol = 1.e-10
-//
-// then the test functions would be
-//
-//  func TestSquareRoot(t *testing.T) {
-//    testutil.Test(t, tol, cases, SquareRoot)
-//  }
-//
-//  func TestSquareRootvsSqrt(t *testing.T) {
-//    testutil.Test(t, tol, cases, SquareRoot, math.Sqrt)
-//  }
-func Test(t *testing.T, tolerance interface{}, cs Cases, fs ...Func) {
-	tol := tolerance.(float64)
-	cvs, nc, nfc := parseCases(cs)
-	f1v, f2v := parseFuncs(fs...)
-
+func Test(t *testing.T, tolerance interface{}, cases Cases, funcs ...Func) {
+	tol := validateTolerance(tolerance)
+	cvs, nc, nfc, err := parseCases(cases)
+	if err != nil {
+		t.Fatal(err)
+	}
+	f1v, f2v, err := parseFuncs(funcs...)
+	if err != nil {
+		t.Fatal(err)
+	}
 	nIn := f1v.Type().NumIn()
 	nOut := f1v.Type().NumOut()
 
-	validateTestIO(nIn, nOut, nfc, f2v.IsNil())
+	switch f2v.IsNil() {
+	case true: // 1 func
+		if nfc-1 != nIn+nOut {
+			err = fmt.Errorf("wrong number of input/output slices. Got %v, want %v", nfc-1, nIn+nOut)
+			return
+		}
+	case false: // 2 funcs
+		if nfc-1 != nIn+nOut && nfc-1 != nIn { // outputs are optional with 2 funcs
+			err = fmt.Errorf("wrong number of input slices. Got %v, want %v", nfc-1, nIn)
+			return
+		}
+	}
 
 	for i := 0; i < nc; i++ {
 		subtest(t, cvs.Index(i), f1v, f2v, nIn, nOut, tol)
 	}
 }
 
-// validateTestIO panics if the provided arguments are inconsistent.
-func validateTestIO(nIn, nOut, nfc int, f2vIsNil bool) {
-	panicIf(
-		nfc-1 != nIn+nOut && f2vIsNil,
-		"Wrong number of input/output slices. Got %v, want %v.",
-		nfc-1, nIn+nOut,
-	)
-	panicIf(
-		nfc-1 != nIn && !f2vIsNil,
-		"Wrong number of input slices. Got %v, want %v.",
-		nfc-1, nIn,
-	)
-}
-
 // subtest runs a subtest for a case.
-func subtest(t *testing.T, cv casev, f1v, f2v funcv, nIn, nOut int, tol float64) {
+func subtest(t *testing.T, cv, f1v, f2v reflect.Value, nIn, nOut int, tol float64) {
 	t.Run(name(cv), func(t *testing.T) {
 		var in, out, res []reflect.Value
 
@@ -90,43 +67,71 @@ func subtest(t *testing.T, cv casev, f1v, f2v funcv, nIn, nOut int, tol float64)
 		for i := 0; i < nOut; i++ {
 			ri := res[i]
 			oi := out[i]
-			handleSubtest(t, i, ri, oi, tol)
+			if err := handleSubtest(i, ri, oi, tol); err != nil {
+				t.Error(err)
+			}
 		}
 	})
 }
 
-// handleSubtest handles the output of the comparison between ri and oi.
-func handleSubtest(t *testing.T, i int, ri, oi reflect.Value, tol float64) {
-	if res := equal(ri, oi, tol); !res.Ok {
-		j := res.Position
-		if j < 0 {
-			t.Errorf("Error: length mismatch between %v-th result and expected output.", i)
-		}
-		switch kind := oi.Kind(); {
-		case kind == reflect.Slice:
-			if !res.Numerical {
-				t.Errorf("Error in results[%v][%v]. Got %v, want %v.",
-					i, j, ri.Index(j), oi.Index(j))
-			} else {
-				t.Errorf("Error in results[%v][%v]. Got %v, want %v. (%v)",
-					i, j, ri.Index(j), oi.Index(j), res.RelativeError)
-			}
-
-		case kind == reflect.Struct:
-			if !res.Numerical {
-				t.Errorf("Error in results[%v].%v. Got %v, want %v.",
-					i, oi.Type().Field(j).Name, ri.Field(j), oi.Field(j))
-			} else {
-				t.Errorf("Error in results[%v].%v. Got %v, want %v. (%v)",
-					i, oi.Type().Field(j).Name, ri.Field(j), oi.Field(j), res.RelativeError)
-			}
-
+// handleSubtest returns an error if a subtest fails.
+func handleSubtest(i int, ri, oi reflect.Value, tol float64) (err error) {
+	res := equal(ri, oi, tol)
+	if res.Ok {
+		return
+	}
+	if res.LengthMismatch {
+		err = fmt.Errorf("[%v]: Length mismatch", i)
+		return
+	}
+	if res.MissingValue {
+		missing := res.Position
+		switch kind := oi.Kind(); kind {
+		case reflect.Struct:
+			err = fmt.Errorf("[%v]: Missing struct field %v", i, oi.Type().Field(missing).Name)
+		case reflect.Map:
+			err = fmt.Errorf("[%v]: Missing key %v", i, oi.MapKeys()[missing])
 		default:
-			if !res.Numerical {
-				t.Errorf("Error in results[%v]. Got %v, want %v.", i, ri, oi)
-			} else {
-				t.Errorf("Error in results[%v]. Got %v, want %v. (%v)", i, ri, oi, res.RelativeError)
-			}
+			err = fmt.Errorf("[%v]: Should never reach here", i)
 		}
+		return
+	}
+
+	pos := res.Position
+
+	switch res.Numerical {
+	case true:
+		switch kind := oi.Kind(); kind {
+		case reflect.Struct:
+			err = fmt.Errorf("[%v].%v: Got %v, want %v (δ=%v)", i, oi.Type().Field(pos).Name,
+				ri.Field(pos), oi.Field(pos), res.RelativeError)
+		case reflect.Map:
+			key := oi.MapKeys()[pos]
+			err = fmt.Errorf("[%v][%v]: Got %v, want %v (δ=%v)", i, key,
+				ri.MapIndex(key), oi.MapIndex(key), res.RelativeError)
+		case reflect.Array, reflect.Slice:
+			err = fmt.Errorf("[%v][%v]: Got %v, want %v (δ=%v)", i, pos,
+				ri.Index(pos), oi.Index(pos), res.RelativeError)
+		default:
+			err = fmt.Errorf("[%v]: Got %v, want %v (δ=%v)", i, ri, oi, res.RelativeError)
+		}
+		return
+
+	default:
+		switch kind := oi.Kind(); kind {
+		case reflect.Struct:
+			err = fmt.Errorf("[%v].%v: Got %v, want %v", i, oi.Type().Field(pos).Name,
+				ri.Field(pos), oi.Field(pos))
+		case reflect.Map:
+			key := oi.MapKeys()[pos]
+			err = fmt.Errorf("[%v][%v]: Got %v, want %v", i, key,
+				ri.MapIndex(key), oi.MapIndex(key))
+		case reflect.Array, reflect.Slice:
+			err = fmt.Errorf("[%v][%v]: Got %v, want %v", i, pos,
+				ri.Index(pos), oi.Index(pos))
+		default:
+			err = fmt.Errorf("[%v]: Got %v, want %v", i, ri, oi)
+		}
+		return
 	}
 }

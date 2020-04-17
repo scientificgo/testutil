@@ -4,11 +4,7 @@
 
 package testutil
 
-import "fmt"
-
-// panicIf panics if b is true using the format string s and values v.
-func panicIf(b bool, s string, v ...interface{}) {
-	if b {
-		panic(fmt.Sprintf(s, v...))
-	}
-}
+var (
+	ParseFuncs = parseFuncs
+	ParseCases = parseCases
+)
