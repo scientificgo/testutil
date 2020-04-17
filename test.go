@@ -74,7 +74,7 @@ func validateTestIO(nIn, nOut, nfc int, f2vIsNil bool) {
 	)
 }
 
-// subtest runs a sub-test for a given case.
+// subtest runs a subtest for a case.
 func subtest(t *testing.T, cv casev, f1v, f2v funcv, nIn, nOut int, tol float64) {
 	t.Run(name(cv), func(t *testing.T) {
 		var in, out, res []reflect.Value
@@ -95,21 +95,38 @@ func subtest(t *testing.T, cv casev, f1v, f2v funcv, nIn, nOut int, tol float64)
 	})
 }
 
-// handleSubtest checks whether ri is equal to oi
+// handleSubtest handles the output of the comparison between ri and oi.
 func handleSubtest(t *testing.T, i int, ri, oi reflect.Value, tol float64) {
-	if j, ok := equal(ri, oi, tol); !ok {
-
+	if res := equal(ri, oi, tol); !res.Ok {
+		j := res.Position
 		if j < 0 {
 			t.Errorf("Error: length mismatch between %v-th result and expected output.", i)
 		}
-		if kind := oi.Kind(); kind == reflect.Slice {
-			t.Errorf("Error in results[%v][%v]. Got %v, want %v.",
-				i, j, ri.Index(j), oi.Index(j))
-		} else if kind == reflect.Struct {
-			t.Errorf("Error in results[%v].%v. Got %v, want %v.",
-				i, oi.Type().Field(j).Name, ri.Field(j), oi.Field(j))
-		} else {
-			t.Errorf("Error in results[%v]. Got %v, want %v.", i, ri, oi)
+		switch kind := oi.Kind(); {
+		case kind == reflect.Slice:
+			if !res.Numerical {
+				t.Errorf("Error in results[%v][%v]. Got %v, want %v.",
+					i, j, ri.Index(j), oi.Index(j))
+			} else {
+				t.Errorf("Error in results[%v][%v]. Got %v, want %v. (%v)",
+					i, j, ri.Index(j), oi.Index(j), res.RelativeError)
+			}
+
+		case kind == reflect.Struct:
+			if !res.Numerical {
+				t.Errorf("Error in results[%v].%v. Got %v, want %v.",
+					i, oi.Type().Field(j).Name, ri.Field(j), oi.Field(j))
+			} else {
+				t.Errorf("Error in results[%v].%v. Got %v, want %v. (%v)",
+					i, oi.Type().Field(j).Name, ri.Field(j), oi.Field(j), res.RelativeError)
+			}
+
+		default:
+			if !res.Numerical {
+				t.Errorf("Error in results[%v]. Got %v, want %v.", i, ri, oi)
+			} else {
+				t.Errorf("Error in results[%v]. Got %v, want %v. (%v)", i, ri, oi, res.RelativeError)
+			}
 		}
 	}
 }

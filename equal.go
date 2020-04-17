@@ -13,98 +13,157 @@ import (
 	"time"
 )
 
-// Equal returns true if x (actual) is equal to y (expected).
-//
-// For float and complex number types, x is equal to y if is
-// within tol of y; in practice, this means |x-y| < |y * tol|
-// or |x| < |tol| if y=0.
-//
-// For composite types (slice, array, struct, map), x equals y if
-// every element/field/key of x equals that in y.
-//
-// For func types, x equals y if x(args) is equal to y(args) for
-// randomly generated mock args.
-//
-// For other types (int, bool, string, char, etc.) x equals y
-// if they are equal according to reflect.DeepEqual.
-//
-// The tolerance parameter is optional and has a default value of zero,
-// which corresponds to checking for absolute equality.
-func Equal(x, y interface{}, tolerance ...interface{}) bool {
-	tol := validateTolerance(tolerance...)
-	_, ok := equal(reflect.ValueOf(x), reflect.ValueOf(y), tol)
-	return ok
+// EqualResult represents the result of an Equal comparison
+// between arbitrary x and y.
+type EqualResult struct {
+	// Ok is true if x equals y.
+	Ok bool
+
+	// Numerical is true if x and y are numerical.
+	Numerical bool
+
+	// RelativeError is the error in x relative to y if they are numerical.
+	// It is a complex number if x and y are complex numbers.
+	RelativeError reflect.Value
+
+	// AbsoluteError is the difference between x and y if they are numerical.
+	// It is a complex number if x and y are complex numbers.
+	AbsoluteError reflect.Value
+
+	// Position is the the first "location" that x does not equal y
+	// if x and y are structured data.
+	//
+	// For slices and arrays it is the index of first element from x
+	// that does not equal y.
+	//
+	// For structs it is the index of the first field in x that
+	// does not equal y and/or has a different name than in y.
+	//
+	// For maps it is the index of either the first key from y that is not
+	// in x or the first key for which x does not equal y.
+	//
+	// A value of -1 indicates a length mismatch.
+	Position int
 }
 
-func equal(xv, yv reflect.Value, tol float64) (i int, ok bool) {
-	t := xv.Type()
-	if ok = (t.Kind() == yv.Type().Kind()); !ok {
-		i--
+// Equal reports whether x (actual) is equal to y (expected).
+//
+// For numerical types, x is equal to y if:
+//  |x - y| < tolerance * |y|, for y ≠ 0 (relative error)
+//  |x| < tolerance,           for y = 0 (absolute error)
+//
+// For structured types (slice, array, struct, map), x equals y if
+// every element/field/key of x equals that in y.
+//
+// For func types, x equals y if x(args) equals y(args) for
+// randomly generated args.
+//
+// For other types x equals y if reflect.DeepEqual(x, y) is true.
+//
+func Equal(x, y, tolerance interface{}) EqualResult {
+	tol := validateTolerance(tolerance)
+	res := equal(reflect.ValueOf(x), reflect.ValueOf(y), tol)
+	return res
+}
+
+var floatType = reflect.ValueOf(float64(1)).Type()
+var complexType = reflect.ValueOf(complex128(1)).Type()
+
+// equal reports whether the value represented by xv equals that which
+// is represented by yv. It recurses through nested structures to compare
+// every part for equality. Numerical values are considered equal if they
+// are equal within the specified tolerance, which means that x is equal
+// to y if and only if
+//
+//  |x - y| < tol * |y|, for y ≠ 0 (relative error)
+//  |x| < tol,           for y = 0 (absolute error)
+//
+// for floats and for both the real and imaginary parts for complex types.
+func equal(xv, yv reflect.Value, tol float64) (res EqualResult) {
+	kind := xv.Type().Kind()
+
+	res.RelativeError = reflect.ValueOf(nil)
+	res.AbsoluteError = reflect.ValueOf(nil)
+
+	if res.Ok = (kind == yv.Type().Kind()); !res.Ok {
 		return
 	}
 
-	switch kx := t.Kind(); kx {
+	switch kind {
 	case reflect.Slice, reflect.Array:
-		if ok = equalSlice(xv, yv, tol); !ok {
+		if res = equalSlice(xv, yv, tol); !res.Ok {
 			return
 		}
 
 	case reflect.Map:
-		if ok = equalMap(xv, yv, tol); !ok {
+		if res = equalMap(xv, yv, tol); !res.Ok {
 			return
 		}
 
 	case reflect.Struct:
-		if ok = equalStruct(xv, yv, tol); !ok {
+		if res = equalStruct(xv, yv, tol); !res.Ok {
 			return
 		}
 
-	case reflect.Float32, reflect.Float64:
-		x := xv.Interface().(float64)
-		y := yv.Interface().(float64)
-		if ok = equalFloat(x, y, tol); !ok {
+	case reflect.Float32, reflect.Float64, // real-valued
+		reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+		x := xv.Convert(floatType).Interface().(float64)
+		y := yv.Convert(floatType).Interface().(float64)
+		if res = equalFloat(x, y, tol); !res.Ok {
 			return
 		}
-	case reflect.Complex64, reflect.Complex128:
-		x := xv.Interface().(complex128)
-		y := yv.Interface().(complex128)
-		if ok = equalComplex(x, y, tol); !ok {
+	case reflect.Complex64, reflect.Complex128: // complex-valued
+		x := xv.Convert(complexType).Interface().(complex128)
+		y := yv.Convert(complexType).Interface().(complex128)
+		if res = equalComplex(x, y, tol); !res.Ok {
 			return
 		}
+
 	case reflect.Func:
-		if ok = equalFunc(xv, yv, tol); !ok {
+		if res = equalFunc(xv, yv, tol); !res.Ok {
 			return
 		}
-	default:
-		if ok = reflect.DeepEqual(xv.Interface(), yv.Interface()); !ok {
+
+	default: // anything else: Bool, Chan, String, Interface, Ptr, UnsafePtr
+		if res.Ok = reflect.DeepEqual(xv.Interface(), yv.Interface()); !res.Ok {
 			return
 		}
 	}
 	return
 }
 
-func equalSlice(xv, yv reflect.Value, tol float64) (ok bool) {
+// equalSlice reports whether the slice xv is equal to the slice yv. It checks
+// the lengths are equal and the values for each index positiona are equal.
+// Numerical values must be equal within the specified tolerance.
+func equalSlice(xv, yv reflect.Value, tol float64) (res EqualResult) {
 	// check the slices have equal lengths
 	n := xv.Len()
-	if ok = (n == yv.Len()); !ok {
+	if res.Ok = (n == yv.Len()); !res.Ok {
+		res.Position = -1
 		return
 	}
 	// check that the items at each position are equal
 	for i := 0; i < n; i++ {
-		if _, ok = equal(xv.Index(i), yv.Index(i), tol); !ok {
+		if res = equal(xv.Index(i), yv.Index(i), tol); !res.Ok {
+			res.Position = i
 			return
 		}
 	}
 	return
 }
 
-func equalMap(xv, yv reflect.Value, tol float64) (ok bool) {
+// equalMap reports whether the map xn is equal to the map yv
+// for every key, and that they identical keys. Numerical values
+// must be equal within the specified tolerance.
+func equalMap(xv, yv reflect.Value, tol float64) (res EqualResult) {
 	xkeys := xv.MapKeys()
 	ykeys := yv.MapKeys()
 
 	// check that x and y have the same number of keys
 	n := len(ykeys)
-	if ok = len(xkeys) == n; !ok {
+	if res.Ok = len(xkeys) == n; !res.Ok {
+		res.Position = -1
 		return
 	}
 
@@ -113,76 +172,128 @@ func equalMap(xv, yv reflect.Value, tol float64) (ok bool) {
 	for i := 0; i < n; i++ {
 		ykey := ykeys[i]
 		for _, xkey := range xkeys {
-			if _, ok = equal(xkey, ykey, tol); ok {
+			if res = equal(xkey, ykey, tol); res.Ok {
 				break
 			}
 		}
 		// if ykey was not found, return false
-		if !ok {
+		if !res.Ok {
+			res.Position = i
 			return
 		}
 		// if the items for this key are not equal, return false
-		if _, ok = equal(xv.MapIndex(ykey), yv.MapIndex(ykey), tol); !ok {
+		if res = equal(xv.MapIndex(ykey), yv.MapIndex(ykey), tol); !res.Ok {
+			res.Position = i
 			return
 		}
 	}
 	return
 }
 
-func equalStruct(xv, yv reflect.Value, tol float64) (ok bool) {
+// equalStruct reports whether the struct xn is equal to the struct yv
+// for every field, and that they identical fields. Numerical values
+// must be equal within the specified tolerance.
+func equalStruct(xv, yv reflect.Value, tol float64) (res EqualResult) {
 	// check that x and y have the same number of fields
 	n := xv.Type().NumField()
-	if ok = (n == yv.Type().NumField()); !ok {
+	if res.Ok = (n == yv.Type().NumField()); !res.Ok {
+		res.Position = -1
 		return
 	}
 	// check that the fields at each position are equal
 	for i := 0; i < n; i++ {
-		if _, ok = equal(xv.Field(i), yv.Field(i), tol); !ok {
+		if xv.Type().Field(i).Name != yv.Type().Field(i).Name {
+			res.Ok = false
+			res.Position = i
+			return
+		}
+		if res = equal(xv.Field(i), yv.Field(i), tol); !res.Ok {
+			res.Position = i
 			return
 		}
 	}
 	return
 }
 
-// equalFloat returns true if x and y are equal within the specified tolerance
-func equalFloat(x, y, tol float64) bool {
+// equalFloat reports whether x equals y within the specified tolerance.
+// Zeros and Infinities are considered equal if they have the same sign.
+// NaNs are always considered equal to other NaNs.
+func equalFloat(x, y, tol float64) (res EqualResult) {
+	diff := x - y
+	res.Numerical = true
+	res.AbsoluteError = reflect.ValueOf(diff)
+
 	if math.IsNaN(x) && math.IsNaN(y) {
-		return true
+		res.Ok = true
+		res.RelativeError = reflect.ValueOf(0.)
+		return
 	}
+
 	if x == y || math.IsInf(y, 0) {
-		return math.Signbit(x) == math.Signbit(y)
+		res.Ok = math.Signbit(x) == math.Signbit(y)
+		if res.Ok {
+			res.RelativeError = reflect.ValueOf(0.)
+		} else {
+			res.RelativeError = reflect.ValueOf(math.Min(-2, math.Abs(y)))
+		}
+		return
 	}
-	// check relative error, i.e. |expected - actual| / |actual| < |tol|
-	diff := math.Abs(x - y)
-	maxdiff := tol * math.Abs(y)
-	// if y = 0 or tol*y underflows, set maxdiff = tol
-	if maxdiff == 0 {
-		maxdiff = tol
+
+	// check magnitude of relative error, i.e. |expected - actual| / |actual| < |tol|
+	if y == 0 {
+		maxdiff := tol
+		res.Ok = math.Abs(diff) < math.Abs(maxdiff)
+		res.RelativeError = reflect.ValueOf(diff)
+		return
 	}
-	return diff <= maxdiff
+
+	maxdiff := y * tol
+	res.Ok = math.Abs(diff) <= math.Abs(maxdiff)
+	res.RelativeError = reflect.ValueOf(diff / y)
+	return
 }
 
-// equalComplex returns true if x and y are equal within the specified tolerance
-// for the real and imaginary parts
-func equalComplex(x, y complex128, tol float64) bool {
-	return equalFloat(real(x), real(y), tol) && equalFloat(imag(x), imag(y), tol)
+// equalComplex reports whether x equals y within the specified tolerance
+// for both the real and imaginary parts.
+func equalComplex(x, y complex128, tol float64) (res EqualResult) {
+	rr := equalFloat(real(x), real(y), tol)
+	ir := equalFloat(imag(x), imag(y), tol)
+	relerr := complex(
+		rr.RelativeError.Interface().(float64),
+		ir.RelativeError.Interface().(float64),
+	)
+	abserr := complex(
+		rr.AbsoluteError.Interface().(float64),
+		ir.AbsoluteError.Interface().(float64),
+	)
+	res.Numerical = true
+	res.Ok = rr.Ok && ir.Ok
+	res.RelativeError = reflect.ValueOf(relerr)
+	res.AbsoluteError = reflect.ValueOf(abserr)
+	return
 }
 
-func equalFunc(xv, yv reflect.Value, tol float64) (ok bool) {
+// equalFunc reports whether two functions xv and xy are equivalenet by
+// comparing their respective outputs on randomly generated inputs.
+// Numerical output values must be equal within the specified tolerance.
+func equalFunc(xv, yv reflect.Value, tol float64) (res EqualResult) {
 	r := rand.New(rand.NewSource(time.Now().Unix()))
 
-	// if checking for exact equality
+	// if checking for exact equality just use the testing/quick package
 	if tol == 0 {
 		err := quick.CheckEqual(xv.Interface(), yv.Interface(), &quick.Config{Rand: r})
-		return err == nil
+		res.Ok = err == nil
+		return
 	}
 
+	// otherwise generate n random sets of arguments and check the functions
+	// agree for each set, returning an error if they do not agree to within the tolerance
 	for n := 0; n < 1000; n++ {
 		args := mockArgs(xv, r)
 		xcall := xv.Call(args)
 		ycall := yv.Call(args)
 		for i := 0; i < len(xcall); i++ {
-			if _, ok = equal(xcall[i], ycall[i], tol); !ok {
+			if res = equal(xcall[i], ycall[i], tol); !res.Ok {
 				return
 			}
 		}
@@ -190,6 +301,8 @@ func equalFunc(xv, yv reflect.Value, tol float64) (ok bool) {
 	return
 }
 
+// mockArgs generates mock arguments for calling an arbitrary function fv
+// based on its signature.
 func mockArgs(fv funcv, r *rand.Rand) []reflect.Value {
 	nIn := fv.Type().NumIn()
 	args := make([]reflect.Value, nIn)
@@ -201,44 +314,19 @@ func mockArgs(fv funcv, r *rand.Rand) []reflect.Value {
 	return args
 }
 
-func validateTolerance(tolerance ...interface{}) float64 {
-	var tol float64
-	if len(tolerance) > 0 {
-		switch t := tolerance[0].(type) {
-		case float32:
-			tol = math.Abs(float64(t))
-		case float64:
-			tol = math.Abs(t)
-		case complex64:
-			tol = cmplx.Abs(complex128(t))
-		case complex128:
-			tol = cmplx.Abs(t)
-		case int:
-			tol = math.Abs(float64(t))
-		case int8:
-			tol = math.Abs(float64(t))
-		case int16:
-			tol = math.Abs(float64(t))
-		case int32:
-			tol = math.Abs(float64(t))
-		case int64:
-			tol = math.Abs(float64(t))
-		case uint:
-			tol = math.Abs(float64(t))
-		case uint8:
-			tol = math.Abs(float64(t))
-		case uint16:
-			tol = math.Abs(float64(t))
-		case uint32:
-			tol = math.Abs(float64(t))
-		case uint64:
-			tol = math.Abs(float64(t))
-		case uintptr:
-			tol = math.Abs(float64(t))
-		}
+// validateTolerance ensures the tolerance passed is sensibly valued.
+func validateTolerance(tolerance interface{}) (tol float64) {
+	t := reflect.ValueOf(tolerance)
+	switch kind := t.Kind(); kind {
+	case reflect.Float32, reflect.Float64,
+		reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+		tol = math.Abs(t.Convert(floatType).Interface().(float64))
+	case reflect.Complex64, reflect.Complex128:
+		tol = cmplx.Abs(t.Convert(complexType).Interface().(complex128))
 	}
-	if math.IsInf(tol, 0) || math.IsNaN(tol) {
+	if math.IsNaN(tol) {
 		tol = 0
 	}
-	return tol
+	return
 }
