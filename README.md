@@ -10,7 +10,7 @@ title: testutil
 
 # testutil
 
-Package `testutil` provides generic functions for testing and benchmarking in [Go](https://golang.org). Please consult the [GoDoc](https://godoc.org/scientificgo.org/testutil) page for specific details and visit [ScientificGo](https://scientificgo.org) to see more scientific packages for Go.
+Package `testutil` provides generic functions for testing in [Go](https://golang.org). Please consult the [GoDoc](https://godoc.org/scientificgo.org/testutil) page for specific details and visit [ScientificGo](https://scientificgo.org) to see more scientific packages for Go.
 
 ### Installation
 
