@@ -36,13 +36,11 @@ func Test(t *testing.T, tolerance interface{}, cases Cases, funcs ...Func) {
 	switch f2v.IsNil() {
 	case true: // 1 func
 		if nfc-1 != nIn+nOut {
-			err = fmt.Errorf("wrong number of input/output slices. Got %v, want %v", nfc-1, nIn+nOut)
-			return
+			t.Fatalf("wrong number of input/output slices. Got %v, want %v", nfc-1, nIn+nOut)
 		}
 	case false: // 2 funcs
 		if nfc-1 != nIn+nOut && nfc-1 != nIn { // outputs are optional with 2 funcs
-			err = fmt.Errorf("wrong number of input slices. Got %v, want %v", nfc-1, nIn)
-			return
+			t.Fatalf("wrong number of input slices. Got %v, want %v", nfc-1, nIn)
 		}
 	}
 
