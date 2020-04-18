@@ -292,7 +292,7 @@ func equalComplex(x, y complex128, tol float64) (res EqualResult) {
 	return
 }
 
-// equalFunc reports whether two functions xv and xy are equivalenet by
+// equalFunc reports whether two functions xv and xy are equivalent by
 // comparing their respective outputs on randomly generated inputs.
 // Numerical output values must be equal within the specified tolerance.
 func equalFunc(xv, yv reflect.Value, tol float64) (res EqualResult) {
