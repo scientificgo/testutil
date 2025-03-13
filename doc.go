@@ -4,4 +4,4 @@
 
 // Package testutil provides generic functions for testing and benchmarking
 // with go test, as well as type-agnostic implementations of Equal, Any and All.
-package testutil // import "scientificgo.org/testutil"
+package testutil

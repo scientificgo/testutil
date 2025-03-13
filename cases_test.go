@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"testing"
 
-	. "scientificgo.org/testutil"
+	. "github.com/scientificgo/testutil"
 )
 
 func TestParseCases(t *testing.T) {

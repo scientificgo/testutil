@@ -8,7 +8,7 @@ import (
 	"math"
 	"testing"
 
-	. "scientificgo.org/testutil"
+	. "github.com/scientificgo/testutil"
 )
 
 func TestTest_Slices(t *testing.T) {
@@ -96,7 +96,7 @@ func TestTest_Default(t *testing.T) {
 	}{
 		{"", chani64, chani64, true},
 		{"", chanf64, chani64, false},
-		{"", 1 == 0, 1 == 1, false},
+		{"", 1 == 0, 1 == 1*1, false},
 		{"", "Ben", "Jerry", false},
 		{"", complex128(1.0), complex128(2.0), complex128(300.0)},
 	}

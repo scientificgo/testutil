@@ -9,7 +9,7 @@ import (
 	"math"
 	"testing"
 
-	. "scientificgo.org/testutil"
+	. "github.com/scientificgo/testutil"
 )
 
 func TestParseFuncs(t *testing.T) {

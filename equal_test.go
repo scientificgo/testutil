@@ -8,7 +8,7 @@ import (
 	"math"
 	"testing"
 
-	. "scientificgo.org/testutil"
+	. "github.com/scientificgo/testutil"
 )
 
 var (

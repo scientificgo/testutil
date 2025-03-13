@@ -19,7 +19,6 @@ import (
 //
 // If 2 functions are provided, then their respective outputs are
 // compared, using the inputs provided in each case.
-//
 func Test(t *testing.T, tolerance interface{}, cases Cases, funcs ...Func) {
 	tol := validateTolerance(tolerance)
 	cvs, nc, nfc, err := parseCases(cases)

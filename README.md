@@ -14,8 +14,8 @@ Package `testutil` provides generic functions for testing in [Go](https://golang
 
 ### Installation
 
-`go get scientificgo.org/testutil`
+`go get github.com/scientificgo/testutil`
 
 ### Usage
 
-`import "scientificgo.org/testutil"`
+`import "github.com/scientificgo/testutil"`

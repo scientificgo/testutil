@@ -9,7 +9,7 @@ import (
 	"math/cmplx"
 	"testing"
 
-	. "scientificgo.org/testutil"
+	. "github.com/scientificgo/testutil"
 )
 
 func TestAny(t *testing.T) {
