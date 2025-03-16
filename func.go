@@ -11,7 +11,8 @@ import (
 
 // Func represents an arbitrary function with a generic
 // signature of N inputs and M outputs of any types, i.e.:
-//  func Func(in1 In1, ..., inN InN) (out1 Out1, ..., outM OutM)
+//
+//	func Func(in1 In1, ..., inN InN) (out1 Out1, ..., outM OutM)
 type Func interface{}
 
 // parseFuncs parses a slice of Funcs and returns the underlying

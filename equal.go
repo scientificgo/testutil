@@ -53,8 +53,9 @@ type EqualResult struct {
 // Equal reports whether x (actual) is equal to y (expected).
 //
 // For numerical types, x is equal to y if:
-//  |x - y| < tolerance * |y|, for y ≠ 0 (relative error)
-//  |x| < tolerance,           for y = 0 (absolute error)
+//
+//	|x - y| < tolerance * |y|, for y ≠ 0 (relative error)
+//	|x| < tolerance,           for y = 0 (absolute error)
 //
 // For structured types (slice, array, struct, map), x equals y if
 // every element/field/key of x equals that in y.
@@ -63,7 +64,6 @@ type EqualResult struct {
 // randomly generated args.
 //
 // For other types x equals y if reflect.DeepEqual(x, y) is true.
-//
 func Equal(x, y, tolerance interface{}) EqualResult {
 	tol := validateTolerance(tolerance)
 	return equal(reflect.ValueOf(x), reflect.ValueOf(y), tol)
@@ -78,8 +78,8 @@ var complexType = reflect.ValueOf(complex128(1)).Type()
 // are equal within the specified tolerance, which means that x is equal
 // to y if and only if
 //
-//  |x - y| < tol * |y|, for y ≠ 0 (relative error)
-//  |x| < tol,           for y = 0 (absolute error)
+//	|x - y| < tol * |y|, for y ≠ 0 (relative error)
+//	|x| < tol,           for y = 0 (absolute error)
 //
 // for floats and for both the real and imaginary parts for complex types.
 func equal(xv, yv reflect.Value, tol float64) (res EqualResult) {

@@ -12,31 +12,30 @@ import (
 // Cases represents a generic data structure for table-driven testing.
 // It is an alias for a slice of cases with the following structure:
 //
-//  []struct {
-//    Label string
-//    In1   TIn1
-//     ⋮      ⋮
-//    InN   TInN
-//    Out1  TOut1
-//     ⋮      ⋮
-//    OutM  TInM
-//  }
+//	[]struct {
+//	  Label string
+//	  In1   TIn1
+//	   ⋮      ⋮
+//	  InN   TInN
+//	  Out1  TOut1
+//	   ⋮      ⋮
+//	  OutM  TInM
+//	}
 //
 // where N and M are arbitrary.
 //
 // For the common case of testing a numerical function of a single
 // argument, this would take the simple form of:
 //
-//  []struct {
-//    Label string
-//    In    float64
-//    Out   float64
-//  }{
-//	  {"SomeLabel", x, y},
-//	  {"AnotherLabel", x1, y1},
-//    ...
-//  }
-//
+//	 []struct {
+//	   Label string
+//	   In    float64
+//	   Out   float64
+//	 }{
+//		  {"SomeLabel", x, y},
+//		  {"AnotherLabel", x1, y1},
+//	   ...
+//	 }
 type Cases interface{}
 
 // parseCases converts cases reflect values and performs basic validation checks.
